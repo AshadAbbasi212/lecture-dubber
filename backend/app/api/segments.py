@@ -21,6 +21,8 @@ class SegmentResponse(BaseModel):
     src_text: str
     tgt_text: str
     edited_by_user: bool
+    flagged: bool = False
+    flag_reason: Optional[str] = None
 
 
 class SegmentUpdateRequest(BaseModel):
@@ -44,7 +46,9 @@ def get_segments(job_id: str, current_user: User = Depends(get_current_user), db
             speaker=s.speaker,
             src_text=s.src_text,
             tgt_text=s.tgt_text,
-            edited_by_user=s.edited_by_user
+            edited_by_user=s.edited_by_user,
+            flagged=s.flagged,
+            flag_reason=s.flag_reason
         )
         for s in segments
     ]
@@ -83,7 +87,9 @@ def update_segments(
             speaker=s.speaker,
             src_text=s.src_text,
             tgt_text=s.tgt_text,
-            edited_by_user=s.edited_by_user
+            edited_by_user=s.edited_by_user,
+            flagged=s.flagged,
+            flag_reason=s.flag_reason
         )
         for s in refreshed
     ]

@@ -23,6 +23,11 @@ from backend.app.ingest.media_probe import probe_media_file, standardize_to_mp4,
 from backend.app.ingest.ssrf import download_safe_url, SSRFSecurityError, OversizeFileError
 from backend.app.ingest.share_links import resolve_share_link
 from backend.app.ingest.youtube import download_youtube_video, YouTubeImportError
+from backend.app.pipeline.audio_extractor import extract_audio_tracks
+from backend.app.engines.separation.demucs_separator import DemucsSeparatorEngine
+from backend.app.engines.asr.faster_whisper_asr import FasterWhisperASREngine
+from backend.app.engines.translation.llm_translator import LocalLLMTranslator
+from backend.app.engines.base import TranscriptSegment, TranslatedSegment
 from backend.app.storage.local import storage
 
 
@@ -183,53 +188,175 @@ class PipelineRunner:
 
         elif stage == PipelineStage.EXTRACTING:
             out_key = f"{job_dir}/audio/original.wav"
-            storage.put(out_key, b"FAKE_ORIGINAL_WAV_BYTES")
+            asr_key = f"{job_dir}/audio/asr_16k.wav"
+
+            if self.mock_execution:
+                if not storage.exists(out_key):
+                    storage.put(out_key, b"FAKE_ORIGINAL_WAV_BYTES")
+                if not storage.exists(asr_key):
+                    storage.put(asr_key, b"FAKE_ASR_WAV_BYTES")
+                self._record_artifact(job, "original_wav", out_key, stage)
+                self._record_artifact(job, "asr_wav", asr_key, stage)
+                return
+
+            source_video_path = storage.get_path(f"{job_dir}/source.mp4")
+            audio_dir = storage.get_path(f"{job_dir}/audio")
+            extract_audio_tracks(source_video_path, audio_dir)
+
             self._record_artifact(job, "original_wav", out_key, stage)
+            self._record_artifact(job, "asr_wav", asr_key, stage)
 
         elif stage == PipelineStage.SEPARATING:
             voc_key = f"{job_dir}/audio/vocals.wav"
             bg_key = f"{job_dir}/audio/background.wav"
-            storage.put(voc_key, b"FAKE_VOCALS_BYTES")
-            storage.put(bg_key, b"FAKE_BACKGROUND_BYTES")
+
+            if self.mock_execution:
+                if not storage.exists(voc_key):
+                    storage.put(voc_key, b"FAKE_VOCALS_BYTES")
+                if not storage.exists(bg_key):
+                    storage.put(bg_key, b"FAKE_BACKGROUND_BYTES")
+                self._record_artifact(job, "vocals_wav", voc_key, stage)
+                self._record_artifact(job, "background_wav", bg_key, stage)
+                return
+
+            orig_audio_path = storage.get_path(f"{job_dir}/audio/original.wav")
+            audio_dir = storage.get_path(f"{job_dir}/audio")
+            separator = DemucsSeparatorEngine()
+            separator.separate(str(orig_audio_path), str(audio_dir))
+
             self._record_artifact(job, "vocals_wav", voc_key, stage)
             self._record_artifact(job, "background_wav", bg_key, stage)
 
         elif stage == PipelineStage.TRANSCRIBING:
             trans_key = f"{job_dir}/transcript.json"
-            transcript_data = {
-                "detected_language": job.source_lang or "en",
+
+            if self.mock_execution:
+                transcript_data = {
+                    "detected_language": job.source_lang or "en",
+                    "language_probability": 0.99,
+                    "segments": [
+                        {"idx": 1, "start": 0.0, "end": 4.5, "text": "Welcome to the lecture on computer algorithms."},
+                        {"idx": 2, "start": 4.6, "end": 9.2, "text": "Today we will analyze time and space complexity."}
+                    ]
+                }
+                storage.put(trans_key, json.dumps(transcript_data, ensure_ascii=False).encode("utf-8"))
+                self._record_artifact(job, "transcript_json", trans_key, stage)
+                return
+
+            vocals_path = storage.get_path(f"{job_dir}/audio/vocals.wav")
+            if not vocals_path.exists():
+                vocals_path = storage.get_path(f"{job_dir}/audio/asr_16k.wav")
+
+            asr_engine = FasterWhisperASREngine()
+            asr_res = asr_engine.transcribe(str(vocals_path), language=job.source_lang)
+
+            if not job.source_lang:
+                job.source_lang = asr_res.language
+                self.db.commit()
+
+            transcript_payload = {
+                "detected_language": asr_res.language,
+                "language_probability": asr_res.language_probability,
+                "duration": asr_res.duration,
                 "segments": [
-                    {"idx": 1, "start": 0.0, "end": 4.5, "text": "Welcome to the lecture on computer algorithms."},
-                    {"idx": 2, "start": 4.6, "end": 9.2, "text": "Today we will analyze time and space complexity."}
+                    {
+                        "idx": s.idx,
+                        "start": s.start,
+                        "end": s.end,
+                        "text": s.text,
+                        "speaker": s.speaker
+                    }
+                    for s in asr_res.segments
                 ]
             }
-            storage.put(trans_key, json.dumps(transcript_data).encode("utf-8"))
+            storage.put(trans_key, json.dumps(transcript_payload, ensure_ascii=False, indent=2).encode("utf-8"))
             self._record_artifact(job, "transcript_json", trans_key, stage)
 
         elif stage == PipelineStage.TRANSLATING:
             trans_key = f"{job_dir}/translation.json"
-            # Create segments in DB
-            translations = [
-                ("Welcome to the lecture on computer algorithms.", "کمپیوٹر الگورتھم کے لیکچر میں خوش آمدید۔"),
-                ("Today we will analyze time and space complexity.", "آج ہم وقت اور جگہ کی پیچیدگی کا تجزیہ کریں گے۔")
-            ]
-            # Clean up existing segments if retrying
-            self.db.query(Segment).filter(Segment.job_id == job.id).delete()
-            for i, (src, tgt) in enumerate(translations, 1):
-                seg = Segment(
-                    job_id=job.id,
-                    idx=i,
-                    start=(i - 1) * 5.0,
-                    end=i * 4.8,
-                    speaker="speaker_0",
-                    src_text=src,
-                    tgt_text=tgt,
-                    edited_by_user=False
+
+            if self.mock_execution:
+                translations = [
+                    ("Welcome to the lecture on computer algorithms.", "کمپیوٹر الگورتھم کے لیکچر میں خوش آمدید۔"),
+                    ("Today we will analyze time and space complexity.", "آج ہم وقت اور جگہ کی پیچیدگی کا تجزیہ کریں گے۔")
+                ]
+                self.db.query(Segment).filter(Segment.job_id == job.id).delete()
+                for i, (src, tgt) in enumerate(translations, 1):
+                    seg = Segment(
+                        job_id=job.id,
+                        idx=i,
+                        start=(i - 1) * 5.0,
+                        end=i * 4.8,
+                        speaker="speaker_0",
+                        src_text=src,
+                        tgt_text=tgt,
+                        edited_by_user=False,
+                        flagged=False
+                    )
+                    self.db.add(seg)
+                self.db.commit()
+
+                storage.put(trans_key, json.dumps({"segments": translations}, ensure_ascii=False).encode("utf-8"))
+                self._record_artifact(job, "translation_json", trans_key, stage)
+                return
+
+            transcript_raw = storage.get(f"{job_dir}/transcript.json")
+            transcript_dict = json.loads(transcript_raw.decode("utf-8"))
+            raw_segs = transcript_dict.get("segments", [])
+
+            transcript_segments = [
+                TranscriptSegment(
+                    idx=s["idx"],
+                    start=s["start"],
+                    end=s["end"],
+                    text=s["text"],
+                    speaker=s.get("speaker", "speaker_0")
                 )
-                self.db.add(seg)
+                for s in raw_segs
+            ]
+
+            translator = LocalLLMTranslator()
+            translated_segs = translator.translate(
+                segments=transcript_segments,
+                src_lang=job.source_lang or "en",
+                tgt_lang=job.target_lang,
+                glossary=options.get("glossary")
+            )
+
+            self.db.query(Segment).filter(Segment.job_id == job.id).delete()
+            for ts in translated_segs:
+                db_seg = Segment(
+                    job_id=job.id,
+                    idx=ts.idx,
+                    start=ts.start,
+                    end=ts.end,
+                    speaker=ts.speaker,
+                    src_text=ts.src_text,
+                    tgt_text=ts.tgt_text,
+                    edited_by_user=False,
+                    flagged=ts.flagged,
+                    flag_reason=ts.flag_reason
+                )
+                self.db.add(db_seg)
             self.db.commit()
 
-            storage.put(trans_key, json.dumps({"segments": translations}, ensure_ascii=False).encode("utf-8"))
+            translation_payload = {
+                "source_lang": job.source_lang or "en",
+                "target_lang": job.target_lang,
+                "segments": [
+                    {
+                        "idx": ts.idx,
+                        "start": ts.start,
+                        "end": ts.end,
+                        "src_text": ts.src_text,
+                        "tgt_text": ts.tgt_text,
+                        "flagged": ts.flagged,
+                        "flag_reason": ts.flag_reason
+                    }
+                    for ts in translated_segs
+                ]
+            }
+            storage.put(trans_key, json.dumps(translation_payload, ensure_ascii=False, indent=2).encode("utf-8"))
             self._record_artifact(job, "translation_json", trans_key, stage)
 
         elif stage == PipelineStage.SYNTHESIZING:

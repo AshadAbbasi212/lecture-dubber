@@ -38,6 +38,8 @@ class TranslatedSegment:
     src_text: str
     tgt_text: str
     speaker: str = "speaker_0"
+    flagged: bool = False
+    flag_reason: Optional[str] = None
 
 
 class ASREngine(ABC):

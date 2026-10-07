@@ -17,6 +17,8 @@ class Segment(Base):
     src_text: Mapped[str] = mapped_column(Text, nullable=False)
     tgt_text: Mapped[str] = mapped_column(Text, nullable=False)
     edited_by_user: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    flagged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    flag_reason: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     tts_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     tts_duration: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     stretch_ratio: Mapped[Optional[float]] = mapped_column(Float, nullable=True)

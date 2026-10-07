@@ -2,6 +2,30 @@
 
 All notable changes to the Lecture Dubber project will be documented in this file.
 
+## [Phase 3: Speech Understanding & Translation] - 2026-10-07
+
+### Added
+- **Audio Extraction & Separation Runners ([3.1])**:
+  - Stage 2 audio extractor deriving `original.wav` (44.1 kHz stereo) and `asr_16k.wav` (16 kHz mono) (`backend/app/pipeline/audio_extractor.py`).
+  - Stage 3 Demucs stem separator splitting vocals and background under single-GPU concurrency lock with automatic VRAM release (`backend/app/engines/separation/`).
+- **Faster-Whisper ASR Engine & Sentence Segmentation ([3.2])**:
+  - `FasterWhisperASREngine` with hardware-adaptive compute types (CPU INT8 / CUDA float16) and Silero VAD (`backend/app/engines/asr/`).
+  - Word-level timestamp merging into natural 2-to-15 second sentence segments on pauses and punctuation (English and Urdu) (`segmenter.py`).
+  - Automatic source language detection and confidence scoring.
+- **Context-Aware Translation with Length Budgeting & Retries ([3.3])**:
+  - `LocalLLMTranslator` implementing cross-segment context windows and educational technical glossary enforcement (`backend/app/engines/translation/`).
+  - Strict length budgeting adhering to target language speech rate (+15% upper limit).
+  - Automatic shorter-alternative translation retry triggered whenever a translation exceeds speech duration.
+- **Meaning-Drift & Quality Gate Flagging ([3.4])**:
+  - `check_meaning_drift` flagging suspicious translations (script mismatches, repetition hallucinations, length anomalies, and glossary discrepancies) for prioritize review (`drift_checker.py`).
+  - Database schema and API models updated with `flagged` and `flag_reason` columns.
+- **Human Review Checkpoint & Approval Workflow ([3.5])**:
+  - Pipeline pauses automatically in `awaiting_review` prior to synthesis.
+  - Review API allowing segment review (`GET /api/jobs/{id}/segments`) and in-place edits (`PUT /api/jobs/{id}/segments`) setting `edited_by_user = True`.
+  - Resume upon user approval (`POST /api/jobs/{id}/approve`) and skip-review bypass support.
+- **Automated Test Suite**:
+  - 62 tests across all subsystems passing with 100% success.
+
 ## [Phase 2: Ingest Subsystem] - 2026-10-07
 
 ### Added

@@ -48,11 +48,11 @@ Acceptance: all three input paths produce a validated `source.mp4`; attestation 
 
 ## Phase 3: Understand the speech (stages 2 to 6)
 
-- [ ] 3.1 Audio extraction and separation runners.
-- [ ] 3.2 ASR engine wrapper with language detection, word timestamps, sentence segmentation, windowed processing for long files.
-- [ ] 3.3 Translator interface and chosen implementation with context window, glossary, length budget, and shorter-alternative retry.
-- [ ] 3.4 Meaning-drift flagging.
-- [ ] 3.5 `awaiting_review` state, segments API (list, edit), approve, skip-review.
+- [x] 3.1 Audio extraction and separation runners.
+- [x] 3.2 ASR engine wrapper with language detection, word timestamps, sentence segmentation, windowed processing for long files.
+- [x] 3.3 Translator interface and chosen implementation with context window, glossary, length budget, and shorter-alternative retry.
+- [x] 3.4 Meaning-drift flagging.
+- [x] 3.5 `awaiting_review` state, segments API (list, edit), approve, skip-review.
 
 Acceptance: on a 30-minute test lecture the job reaches `awaiting_review` with sensible segments; edits persist; approval resumes the job.
 
