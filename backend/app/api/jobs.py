@@ -16,6 +16,7 @@ from backend.app.db.models.attestation import Attestation
 from backend.app.db.models.artifact import Artifact
 from backend.app.pipeline.state_machine import JobStatus, PipelineStage, validate_status_transition
 from backend.app.core.config import settings
+from backend.app.core.security import decode_access_token
 from backend.app.storage.local import storage
 from backend.app.api.deps import get_current_user, get_current_user_optional, check_job_create_rate_limit
 from backend.app.ingest.ssrf import validate_url_security, SSRFSecurityError
@@ -312,13 +313,19 @@ def download_artifact(
     kind: str = Query("video", pattern="^(video|audio|audio_mp3|audio_wav)$"),
     format: str = Query("mp3", pattern="^(mp3|wav)$"),
     token: Optional[str] = None,
+    auth_token: Optional[str] = None,
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
     Downloads the output file (MP4 video, MP3 audio, or mixed WAV audio).
-    Supports either authenticated user session OR a signed short-lived token.
+    Supports either authenticated user session, auth_token query param, OR a signed short-lived token.
     """
+    if not current_user and auth_token:
+        auth_payload = decode_access_token(auth_token)
+        if auth_payload and "sub" in auth_payload:
+            current_user = db.query(User).filter(User.id == auth_payload["sub"]).first()
+
     if token:
         payload = storage.verify_signed_token(token)
         if not payload or payload.get("job_id") != job_id:

@@ -2,6 +2,43 @@
 
 All notable changes to the Lecture Dubber project will be documented in this file.
 
+## [Phase 6: Frontend - Next.js 16 Web Application] - 2026-10-07
+
+### Added
+- **Modern Next.js 16 App Router Setup & Architecture ([6.1])**:
+  - Initialized Next.js 16 with React 19, TypeScript, and Tailwind CSS v4 in `frontend/`.
+  - Type-safe API client (`frontend/lib/api.ts`) supporting JWT session auth, chunked uploads, job lifecycle management, segment reviews, and signed downloads.
+  - Global authentication context and protected route enforcement (`frontend/lib/auth-context.tsx`).
+  - Dark-mode design system with Noto Nastaliq Urdu RTL typography rules (`frontend/app/globals.css`).
+  - Global responsive navigation header (`Navbar.tsx`) and local engine status footer (`Footer.tsx`).
+- **Real-Time Jobs Dashboard ([6.2])**:
+  - Live job listing with status filter tabs (All, In Progress, Review Needed, Completed, Failed).
+  - Status badges, progress bars, current stage indicators, honest time-remaining estimates, and one-click actions.
+  - Automatic polling and responsive cards for desktop and mobile viewports (`frontend/app/dashboard/page.tsx`).
+- **New Job Wizard with Resumable Uploads ([6.3])**:
+  - Dual-mode ingest interface: chunked file upload with live progress bar or URL / YouTube import (`frontend/app/jobs/new/page.tsx`).
+  - Target language selector (Urdu / English) with source language detection settings.
+  - Voice cloning toggle and optional skip-review flag (lip-sync explicitly excluded in v1 per architecture rules).
+  - Mandatory legal compliance checkboxes: speaker voice consent affirmation and copyright ownership attestation with audit recording.
+- **Job Detail View & Real-Time SSE Pipeline Stepper ([6.4])**:
+  - Live Server-Sent Events (SSE) connection streaming real-time stage updates and percentage progress (`frontend/app/jobs/[id]/page.tsx`).
+  - Visual 8-stage pipeline stepper with active/completed/pending state indicators.
+  - Error diagnostics display, cancellation trigger, and job deletion controls.
+- **Side-by-Side Segment Review Editor ([6.5])**:
+  - Interactive transcript review screen (`frontend/app/jobs/[id]/review/page.tsx`) with side-by-side source and translated text panels.
+  - Full RTL typography and nastaliq rendering for Urdu segments (`.urdu-text`).
+  - Meaning-drift and timing anomaly warning badges pinned prominently to top of review list.
+  - In-place autosave, segment edit tracking, and one-click "Approve & Start Voice Dubbing" checkpoint button.
+- **Result & Download Center ([6.6])**:
+  - In-browser HTML5 video player previewing stream-copied synchronized MP4 (`frontend/app/jobs/[id]/result/page.tsx`).
+  - One-click downloads for Final Video (MP4), Dubbed Audio (MP3), and Master Mix (WAV).
+  - Short-lived cryptographically signed link generator with one-click clipboard copy.
+- **Legal Compliance Pages ([6.7])**:
+  - Terms of Service (`frontend/app/terms/page.tsx`) covering AI derivative dubbing, voice consent warranties, and provenance disclosures.
+  - Privacy Policy (`frontend/app/privacy/page.tsx`) detailing local-first zero-cloud data isolation and automatic retention purging.
+  - DMCA / Takedown Request Form (`frontend/app/takedown/page.tsx`) with formal copyright/biometric infringement notice submission.
+  - Prominent notices on all legal pages marking text as draft templates pending formal legal counsel review.
+
 ## [Phase 5: Final Video Mux & Output Downloads] - 2026-10-07
 
 ### Added

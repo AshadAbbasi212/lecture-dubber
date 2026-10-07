@@ -78,13 +78,13 @@ Acceptance: a 30-minute test lecture produces a final MP4 with the dubbed audio,
 
 ## Phase 6: Frontend (Next.js)
 
-- [ ] 6.1 Project setup, API client, auth pages, protected routes.
-- [ ] 6.2 Dashboard with job list and status.
-- [ ] 6.3 New-job page: upload with progress, link input, options (no lip-sync toggle in v1), consent and ownership checkboxes, clear warnings.
-- [ ] 6.4 Job detail: live progress, queue position, estimates, error display, cancel and delete.
-- [ ] 6.5 Review editor: side-by-side segments, flagged items first, RTL Urdu support, autosave, approve button.
-- [ ] 6.6 Result page: in-browser preview and download.
-- [ ] 6.7 Terms, privacy, takedown pages (placeholder text marked for legal review).
+- [x] 6.1 Project setup, API client, auth pages, protected routes.
+- [x] 6.2 Dashboard with job list and status.
+- [x] 6.3 New-job page: upload with progress, link input, options (no lip-sync toggle in v1), consent and ownership checkboxes, clear warnings.
+- [x] 6.4 Job detail: live progress, queue position, estimates, error display, cancel and delete.
+- [x] 6.5 Review editor: side-by-side segments, flagged items first, RTL Urdu support, autosave, approve button.
+- [x] 6.6 Result page: in-browser preview and download.
+- [x] 6.7 Terms, privacy, takedown pages (placeholder text marked for legal review).
 
 Acceptance: a new user can sign up, upload, review, wait, preview and download without touching the API directly.
 
