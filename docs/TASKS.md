@@ -37,12 +37,12 @@ Acceptance: a dummy pipeline with fake stages runs end to end through the worker
 
 ## Phase 2: Ingest
 
-- [ ] 2.1 Resumable chunked upload with size and type checks.
-- [ ] 2.2 ffprobe validation and limits (size, duration, streams).
-- [ ] 2.3 Direct URL import with full SSRF protection and tests (private IPs, redirects, DNS rebinding, oversize).
-- [ ] 2.4 Google Drive and Dropbox share-link handling.
-- [ ] 2.5 YouTube import via yt-dlp in the worker, gated by the ownership attestation (stored in `attestations`). Behind a feature flag.
-- [ ] 2.6 Retention cleanup job.
+- [x] 2.1 Resumable chunked upload with size and type checks.
+- [x] 2.2 ffprobe validation and limits (size, duration, streams).
+- [x] 2.3 Direct URL import with full SSRF protection and tests (private IPs, redirects, DNS rebinding, oversize).
+- [x] 2.4 Google Drive and Dropbox share-link handling.
+- [x] 2.5 YouTube import via yt-dlp in the worker, gated by the ownership attestation (stored in `attestations`). Behind a feature flag.
+- [x] 2.6 Retention cleanup job.
 
 Acceptance: all three input paths produce a validated `source.mp4`; attestation rows exist; SSRF tests pass.
 

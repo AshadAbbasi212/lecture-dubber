@@ -2,6 +2,34 @@
 
 All notable changes to the Lecture Dubber project will be documented in this file.
 
+## [Phase 2: Ingest Subsystem] - 2026-10-07
+
+### Added
+- **Resumable Chunked Uploads ([2.1])**:
+  - Validated file formats (`.mp4`, `.mov`, `.mkv`, `.webm`) and size caps.
+  - Chunk resumption offset status query (`GET /api/uploads/{id}`).
+  - Assembled stream probe with ffprobe before acceptance.
+- **ffprobe Media Validation & Standardization ([2.2])**:
+  - `MediaProbeResult` extractor parsing streams, container format, duration, audio/video codecs, and dimensions (`backend/app/ingest/media_probe.py`).
+  - Strict validation: requires speech audio track, rejects files > `MAX_VIDEO_MINUTES` (default 90 min) and dimensions > `MAX_DIMENSION` (4096px).
+  - FastStart MP4 remuxing / transcoding pipeline (`standardize_to_mp4`).
+- **Comprehensive Anti-SSRF Protection ([2.3])**:
+  - DNS resolution with full IP blocklist (private RFC1918, loopback, link-local, carrier-grade NAT, cloud metadata `169.254.169.254`, IPv6 mapped) (`backend/app/ingest/ssrf.py`).
+  - Direct connection to validated IP to defeat DNS rebinding (TOCTOU).
+  - Manual redirect tracking with per-hop IP re-validation (capped at `SSRF_MAX_REDIRECTS`).
+  - Streaming size guard aborting downloads exceeding `MAX_UPLOAD_GB`.
+- **Cloud Share Link Resolution ([2.4])**:
+  - Automatic conversion for Google Drive (`drive.google.com/file/d/...`, `uc?id=...`) and Dropbox (`dropbox.com/s/...`) share links into direct downloadable endpoints (`backend/app/ingest/share_links.py`).
+- **YouTube Ingest Worker & Attestation Gate ([2.5])**:
+  - Worker-isolated `yt-dlp` import downloading best MP4 up to 1080p with audio (`backend/app/ingest/youtube.py`).
+  - Strictly gated by user ownership attestation in database and feature flag `ENABLE_YOUTUBE_IMPORT`.
+- **Retention Cleanup Job ([2.6])**:
+  - Automated retention task purging expired job artifacts on disk and DB records past retention age (`backend/app/ingest/cleanup.py`).
+  - Cleanup of abandoned upload directories older than 24 hours.
+  - Audit logging of all purge operations.
+- **Unit & Integration Test Suite**:
+  - 44 tests across all subsystems passing in under 4 seconds.
+
 ## [Phase 1: Backend Foundation] - 2026-10-07
 
 ### Added

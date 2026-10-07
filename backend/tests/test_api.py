@@ -90,42 +90,55 @@ def test_job_crud_and_review_flow(client, auth_headers, db):
     assert dl_resp.content == b"TEST_MP4_CONTENT"
 
 
-def test_chunked_upload_flow(client, auth_headers):
+def test_chunked_upload_flow(client, auth_headers, sample_mp4_bytes):
     # 1. Start upload
+    total_size = len(sample_mp4_bytes)
     init_resp = client.post("/api/uploads", json={
         "filename": "lecture_01.mp4",
-        "total_size": 20
+        "total_size": total_size
     }, headers=auth_headers)
     assert init_resp.status_code == 200
     upload_id = init_resp.json()["upload_id"]
 
-    # 2. Upload chunks
+    # 2. Upload chunks in two halves
+    mid = total_size // 2
     c1_resp = client.patch(
         f"/api/uploads/{upload_id}",
-        content=b"0123456789",
+        content=sample_mp4_bytes[:mid],
         headers={**auth_headers, "Upload-Offset": "0"}
     )
     assert c1_resp.status_code == 200
 
     c2_resp = client.patch(
         f"/api/uploads/{upload_id}",
-        content=b"ABCDEFGHIJ",
-        headers={**auth_headers, "Upload-Offset": "10"}
+        content=sample_mp4_bytes[mid:],
+        headers={**auth_headers, "Upload-Offset": str(mid)}
     )
     assert c2_resp.status_code == 200
 
-    # 3. Complete upload
+    # 3. Check upload status
+    stat_resp = client.get(f"/api/uploads/{upload_id}", headers=auth_headers)
+    assert stat_resp.status_code == 200
+    assert stat_resp.json()["bytes_uploaded"] == total_size
+
+    # 4. Complete upload
     comp_resp = client.post(f"/api/uploads/{upload_id}/complete", headers=auth_headers)
     assert comp_resp.status_code == 200
-    assert comp_resp.json()["size"] == 20
-    assert storage.get(f"uploads/{upload_id}/source.mp4") == b"0123456789ABCDEFGHIJ"
+    res_data = comp_resp.json()
+    assert res_data["duration"] > 0
+    assert res_data["has_video"] is True
+    assert storage.exists(f"uploads/{upload_id}/source.mp4")
 
 
-def test_sse_events_stream(client, auth_headers, db):
+def test_sse_events_stream(client, auth_headers, db, sample_mp4_bytes):
+    # Prepare an upload source in storage first
+    fake_upload_id = "test_sse_upload"
+    storage.put(f"uploads/{fake_upload_id}/source.mp4", sample_mp4_bytes)
+
     # Create job
     create_resp = client.post("/api/jobs", json={
         "source_type": "upload",
-        "source_ref": "uploads/fake/source.mp4",
+        "source_ref": fake_upload_id,
         "target_lang": "ur"
     }, headers=auth_headers)
     assert create_resp.status_code == 200

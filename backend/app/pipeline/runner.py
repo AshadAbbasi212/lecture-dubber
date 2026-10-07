@@ -17,6 +17,12 @@ from backend.app.pipeline.state_machine import (
     get_next_stage,
     compute_overall_progress,
 )
+from backend.app.core.config import settings
+from backend.app.db.models.attestation import Attestation
+from backend.app.ingest.media_probe import probe_media_file, standardize_to_mp4, MediaValidationError
+from backend.app.ingest.ssrf import download_safe_url, SSRFSecurityError, OversizeFileError
+from backend.app.ingest.share_links import resolve_share_link
+from backend.app.ingest.youtube import download_youtube_video, YouTubeImportError
 from backend.app.storage.local import storage
 
 
@@ -119,8 +125,60 @@ class PipelineRunner:
 
         if stage == PipelineStage.INGESTING:
             out_key = f"{job_dir}/source.mp4"
-            if not storage.exists(out_key):
-                storage.put(out_key, b"FAKE_MP4_SOURCE_VIDEO_BYTES")
+            target_path = storage.get_path(out_key)
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+
+            if self.mock_execution:
+                if not storage.exists(out_key):
+                    storage.put(out_key, b"FAKE_MP4_SOURCE_VIDEO_BYTES")
+                self._record_artifact(job, "source_video", out_key, stage)
+                return
+
+            if job.source_type == "upload":
+                upload_file_key = f"uploads/{job.source_ref}/source.mp4"
+                if not storage.exists(upload_file_key):
+                    if storage.exists(job.source_ref):
+                        upload_file_key = job.source_ref
+                    else:
+                        raise FileNotFoundError(f"Uploaded source not found for reference: {job.source_ref}")
+
+                source_upload_path = storage.get_path(upload_file_key)
+                standardize_to_mp4(source_upload_path, target_path)
+
+            elif job.source_type in ["url", "drive", "dropbox"]:
+                resolved_url = resolve_share_link(job.source_ref)
+                temp_download_path = target_path.with_suffix(".tmp.bin")
+                try:
+                    download_safe_url(resolved_url, temp_download_path)
+                    standardize_to_mp4(temp_download_path, target_path)
+                finally:
+                    if temp_download_path.exists():
+                        temp_download_path.unlink()
+
+            elif job.source_type == "youtube":
+                if not settings.ENABLE_YOUTUBE_IMPORT:
+                    raise YouTubeImportError("YouTube import is disabled by administrator.")
+
+                attestation = self.db.query(Attestation).filter(
+                    Attestation.job_id == job.id,
+                    Attestation.kind == "ownership"
+                ).first()
+                if not attestation:
+                    raise ValueError("YouTube import requires explicit user ownership/permission attestation.")
+
+                temp_yt_path = target_path.with_suffix(".yt.mp4")
+                try:
+                    download_youtube_video(job.source_ref, temp_yt_path)
+                    standardize_to_mp4(temp_yt_path, target_path)
+                finally:
+                    if temp_yt_path.exists():
+                        temp_yt_path.unlink()
+            else:
+                raise ValueError(f"Unsupported source_type '{job.source_type}'")
+
+            # Validate resulting source.mp4 with ffprobe
+            probe_result = probe_media_file(target_path)
+            logger.info(f"Ingested media successfully for job {job.id}: {probe_result.duration:.2f}s, {probe_result.size_bytes} bytes")
             self._record_artifact(job, "source_video", out_key, stage)
 
         elif stage == PipelineStage.EXTRACTING:

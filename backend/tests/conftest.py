@@ -64,3 +64,29 @@ def auth_headers(client):
     })
     token = resp.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def sample_mp4_path() -> Path:
+    p = Path(__file__).resolve().parent.parent.parent / "spikes" / "test_data" / "tiny_sample.mp4"
+    if not p.is_file():
+        import subprocess
+        ffmpeg_cmd = settings.get_ffmpeg_cmd()
+        p.parent.mkdir(parents=True, exist_ok=True)
+        cmd = [
+            ffmpeg_cmd, "-y",
+            "-f", "lavfi", "-i", "testsrc=duration=1:size=320x240:rate=10",
+            "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
+            "-c:v", "libx264", "-preset", "ultrafast",
+            "-c:a", "aac", "-b:a", "64k",
+            "-movflags", "+faststart",
+            str(p)
+        ]
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return p
+
+
+@pytest.fixture
+def sample_mp4_bytes(sample_mp4_path: Path) -> bytes:
+    with open(sample_mp4_path, "rb") as f:
+        return f.read()

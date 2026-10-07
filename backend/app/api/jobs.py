@@ -15,8 +15,13 @@ from backend.app.db.models.job import Job
 from backend.app.db.models.attestation import Attestation
 from backend.app.db.models.artifact import Artifact
 from backend.app.pipeline.state_machine import JobStatus, PipelineStage, validate_status_transition
+from backend.app.core.config import settings
 from backend.app.storage.local import storage
 from backend.app.api.deps import get_current_user, get_current_user_optional, check_job_create_rate_limit
+from backend.app.ingest.ssrf import validate_url_security, SSRFSecurityError
+from backend.app.ingest.share_links import is_share_link
+from backend.app.ingest.youtube import is_youtube_url
+from backend.app.ingest.cleanup import run_retention_cleanup
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -71,12 +76,35 @@ def create_job(req: JobCreateRequest, current_user: User = Depends(get_current_u
     if req.target_lang not in ["en", "ur"]:
         raise HTTPException(status_code=400, detail="Target language must be 'en' or 'ur'.")
 
-    # If YouTube source, check ownership confirmation
-    if req.source_type == "youtube" and not req.ownership_confirmed:
-        raise HTTPException(
-            status_code=400,
-            detail="You must confirm ownership or permission to dub YouTube videos."
-        )
+    if req.source_type not in ["upload", "url", "youtube", "drive", "dropbox"]:
+        raise HTTPException(status_code=400, detail=f"Unsupported source_type '{req.source_type}'.")
+
+    # If upload, verify uploaded session exists
+    if req.source_type == "upload":
+        upload_path = f"uploads/{req.source_ref}/source.mp4"
+        meta_path = f"uploads/{req.source_ref}/meta.json"
+        if not storage.exists(upload_path) and not storage.exists(meta_path) and not storage.exists(req.source_ref):
+            raise HTTPException(status_code=404, detail="Upload file not found. Complete chunk upload first.")
+
+    # If URL, validate against SSRF
+    elif req.source_type in ["url", "drive", "dropbox"]:
+        if not is_share_link(req.source_ref):
+            try:
+                validate_url_security(req.source_ref)
+            except SSRFSecurityError as e:
+                raise HTTPException(status_code=400, detail=f"URL security check failed: {str(e)}")
+
+    # If YouTube source, check feature flag, format, and ownership confirmation
+    elif req.source_type == "youtube":
+        if not settings.ENABLE_YOUTUBE_IMPORT:
+            raise HTTPException(status_code=400, detail="YouTube import is currently disabled.")
+        if not is_youtube_url(req.source_ref):
+            raise HTTPException(status_code=400, detail="Invalid YouTube URL format.")
+        if not req.ownership_confirmed:
+            raise HTTPException(
+                status_code=400,
+                detail="You must confirm ownership or permission to dub YouTube videos."
+            )
 
     # If voice cloning is requested, check consent checkbox
     if req.clone_voice and not req.voice_consent:
@@ -312,3 +340,10 @@ def get_signed_download_url(
     token = storage.create_signed_token(job_id=job.id, kind=kind, expires_in_seconds=3600)
     url = f"/api/jobs/{job.id}/download?kind={kind}&token={token}"
     return {"download_url": url, "expires_in": 3600}
+
+
+@router.post("/retention-cleanup")
+def trigger_retention_cleanup(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Triggers retention cleanup of expired jobs and abandoned uploads."""
+    results = run_retention_cleanup(db)
+    return results
