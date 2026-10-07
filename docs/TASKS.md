@@ -68,11 +68,11 @@ Acceptance: audio-only dub of a 30-minute lecture, in sync within a defined tole
 
 ## Phase 5: Final video (mux)
 
-- [ ] 5.1 Replace the original audio with `dub_mix.wav`; copy the video stream without re-encoding where possible; write `final.mp4` with AI-dubbed metadata.
-- [ ] 5.2 Verify duration match and A/V sync; fail the job with a clear message if drift exceeds tolerance.
-- [ ] 5.3 Add an audio-only download option (dubbed mix as WAV or MP3).
-- [ ] 5.4 Produce honest time estimates from real timings of the stages (without lip-sync).
-- [ ] 5.5 Leave the `LipSyncEngine` interface stub and the reserved state in place (no models).
+- [x] 5.1 Replace the original audio with `dub_mix.wav`; copy the video stream without re-encoding where possible; write `final.mp4` with AI-dubbed metadata.
+- [x] 5.2 Verify duration match and A/V sync; fail the job with a clear message if drift exceeds tolerance.
+- [x] 5.3 Add an audio-only download option (dubbed mix as WAV or MP3).
+- [x] 5.4 Produce honest time estimates from real timings of the stages (without lip-sync).
+- [x] 5.5 Leave the `LipSyncEngine` interface stub and the reserved state in place (no models).
 
 Acceptance: a 30-minute test lecture produces a final MP4 with the dubbed audio, the original video unchanged, and audio and video in sync.
 

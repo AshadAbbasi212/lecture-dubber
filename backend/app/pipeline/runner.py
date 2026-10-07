@@ -32,6 +32,8 @@ from backend.app.pipeline.reference_clip import build_reference_clip
 from backend.app.pipeline.timing_fit import calculate_timing_fit, apply_audio_time_stretch
 from backend.app.engines.tts.voice_synthesizer import VoiceSynthesizer
 from backend.app.pipeline.audio_mixer import assemble_timeline_vocals, mix_vocals_and_background
+from backend.app.pipeline.video_muxer import mux_video_and_audio, export_dub_mp3, AVSyncDriftError
+from backend.app.pipeline.time_estimator import estimate_remaining_seconds
 from backend.app.storage.local import storage
 
 
@@ -501,7 +503,43 @@ class PipelineRunner:
 
         elif stage == PipelineStage.MUXING:
             final_key = f"{job_dir}/output/final.mp4"
-            storage.put(final_key, b"FAKE_FINAL_MUXED_MP4_BYTES")
+            audio_mp3_key = f"{job_dir}/output/dub_audio.mp3"
+
+            if self.mock_execution:
+                if not storage.exists(final_key):
+                    storage.put(final_key, b"FAKE_FINAL_MUXED_MP4_BYTES")
+                if not storage.exists(audio_mp3_key):
+                    storage.put(audio_mp3_key, b"FAKE_DUB_AUDIO_MP3_BYTES")
+                self._record_artifact(job, "final_video", final_key, stage)
+                self._record_artifact(job, "dub_audio", audio_mp3_key, stage)
+                return
+
+            video_path = storage.get_path(f"{job_dir}/source.mp4")
+            audio_path = storage.get_path(f"{job_dir}/dub_mix.wav")
+            out_video_path = storage.get_path(final_key)
+            out_mp3_path = storage.get_path(audio_mp3_key)
+
+            if not video_path.is_file():
+                raise FileNotFoundError(f"Source video missing for job {job.id}: {video_path}")
+            if not audio_path.is_file():
+                raise FileNotFoundError(f"Dubbed audio mix missing for job {job.id}: {audio_path}")
+
+            # Mux video with dubbed audio, verify duration match & A/V sync drift
+            mux_video_and_audio(
+                video_path=video_path,
+                audio_path=audio_path,
+                output_path=out_video_path,
+                target_lang=job.target_lang or "ur",
+                tolerance_seconds=2.0
+            )
+
+            # Export MP3 audio for audio-only download option
+            try:
+                export_dub_mp3(audio_path, out_mp3_path)
+                self._record_artifact(job, "dub_audio", audio_mp3_key, stage)
+            except Exception as e:
+                logger.warning(f"Could not export MP3 for job {job.id}: {e}; continuing with final video")
+
             self._record_artifact(job, "final_video", final_key, stage)
 
     def _record_artifact(self, job: Job, kind: str, path: str, stage: PipelineStage) -> None:
@@ -515,11 +553,22 @@ class PipelineRunner:
         self.db.commit()
 
     def _notify_progress(self, job: Job) -> None:
+        est_rem = None
+        try:
+            curr_stage = PipelineStage(job.stage)
+            source_file = storage.get_path(f"jobs/{job.id}/source.mp4")
+            v_dur = probe_media_file(source_file).duration if source_file.is_file() else 60.0
+            est_rem = estimate_remaining_seconds(curr_stage, 0.5, v_dur)
+        except Exception:
+            est_rem = None
+
         event = {
             "job_id": job.id,
             "status": job.status,
             "stage": job.stage,
             "progress": job.progress,
-            "error": job.error
+            "error": job.error,
+            "estimated_seconds_remaining": est_rem
         }
         broadcaster.broadcast_sync(job.id, event)
+

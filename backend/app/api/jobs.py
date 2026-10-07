@@ -22,6 +22,8 @@ from backend.app.ingest.ssrf import validate_url_security, SSRFSecurityError
 from backend.app.ingest.share_links import is_share_link
 from backend.app.ingest.youtube import is_youtube_url
 from backend.app.ingest.cleanup import run_retention_cleanup
+from backend.app.ingest.media_probe import probe_media_file
+from backend.app.pipeline.time_estimator import estimate_remaining_seconds, estimate_total_pipeline_seconds
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -49,12 +51,30 @@ class JobResponse(BaseModel):
     target_lang: str
     options: dict
     error: Optional[str]
+    estimated_seconds_remaining: Optional[int] = None
+    estimated_total_seconds: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 
 
 def _format_job(job: Job) -> JobResponse:
     options = json.loads(job.options_json) if job.options_json else {}
+    est_rem = None
+    est_total = None
+    try:
+        curr_stage = PipelineStage(job.stage)
+        source_file = storage.get_path(f"jobs/{job.id}/source.mp4")
+        v_dur = probe_media_file(source_file).duration if source_file.is_file() else 60.0
+        est_total = estimate_total_pipeline_seconds(v_dur)
+        if job.status == JobStatus.COMPLETED.value:
+            est_rem = 0
+        elif job.status in [JobStatus.FAILED.value, JobStatus.CANCELED.value]:
+            est_rem = None
+        else:
+            est_rem = estimate_remaining_seconds(curr_stage, 0.5, v_dur)
+    except Exception:
+        pass
+
     return JobResponse(
         id=job.id,
         status=job.status,
@@ -66,9 +86,12 @@ def _format_job(job: Job) -> JobResponse:
         target_lang=job.target_lang,
         options=options,
         error=job.error,
+        estimated_seconds_remaining=est_rem,
+        estimated_total_seconds=est_total,
         created_at=job.created_at,
         updated_at=job.updated_at
     )
+
 
 
 @router.post("", response_model=JobResponse, dependencies=[Depends(check_job_create_rate_limit)])
@@ -286,19 +309,25 @@ async def stream_job_events(job_id: str, current_user: User = Depends(get_curren
 @router.get("/{job_id}/download")
 def download_artifact(
     job_id: str,
-    kind: str = Query("video", pattern="^(video|audio)$"),
+    kind: str = Query("video", pattern="^(video|audio|audio_mp3|audio_wav)$"),
+    format: str = Query("mp3", pattern="^(mp3|wav)$"),
     token: Optional[str] = None,
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
-    Downloads the output file (MP4 video or mixed WAV audio).
+    Downloads the output file (MP4 video, MP3 audio, or mixed WAV audio).
     Supports either authenticated user session OR a signed short-lived token.
     """
     if token:
         payload = storage.verify_signed_token(token)
-        if not payload or payload.get("job_id") != job_id or payload.get("kind") != kind:
+        if not payload or payload.get("job_id") != job_id:
             raise HTTPException(status_code=403, detail="Invalid or expired download token")
+        allowed_kinds = [kind]
+        if kind in ["audio", "audio_mp3", "audio_wav"]:
+            allowed_kinds.extend(["audio", "audio_mp3", "audio_wav"])
+        if payload.get("kind") not in allowed_kinds:
+            raise HTTPException(status_code=403, detail="Token kind mismatch")
     elif not current_user:
         raise HTTPException(status_code=401, detail="Authentication or valid token required")
 
@@ -309,14 +338,40 @@ def download_artifact(
     if current_user and job.user_id != current_user.id and not token:
         raise HTTPException(status_code=403, detail="Not authorized to access this job")
 
-    target_kind = "final_video" if kind == "video" else "dub_mix"
+    if kind == "video":
+        target_kind = "final_video"
+        media_type = "video/mp4"
+        filename = f"lecture_dub_{job.id}.mp4"
+    elif kind == "audio_wav" or (kind == "audio" and format == "wav"):
+        target_kind = "dub_mix"
+        media_type = "audio/wav"
+        filename = f"lecture_dub_{job.id}.wav"
+    else:
+        # Default audio is MP3, fallback to WAV if MP3 is missing
+        mp3_art = db.query(Artifact).filter(Artifact.job_id == job.id, Artifact.kind == "dub_audio").first()
+        if mp3_art and storage.exists(mp3_art.path):
+            target_kind = "dub_audio"
+            media_type = "audio/mpeg"
+            filename = f"lecture_dub_{job.id}.mp3"
+        else:
+            target_kind = "dub_mix"
+            media_type = "audio/wav"
+            filename = f"lecture_dub_{job.id}.wav"
+
+    file_path = None
     artifact = db.query(Artifact).filter(Artifact.job_id == job.id, Artifact.kind == target_kind).first()
-    if not artifact or not storage.exists(artifact.path):
+    if artifact and storage.exists(artifact.path):
+        file_path = storage.get_path(artifact.path)
+    elif target_kind == "dub_mix" and storage.exists(f"jobs/{job.id}/dub_mix.wav"):
+        file_path = storage.get_path(f"jobs/{job.id}/dub_mix.wav")
+    elif target_kind == "dub_audio" and storage.exists(f"jobs/{job.id}/output/dub_audio.mp3"):
+        file_path = storage.get_path(f"jobs/{job.id}/output/dub_audio.mp3")
+    elif target_kind == "final_video" and storage.exists(f"jobs/{job.id}/output/final.mp4"):
+        file_path = storage.get_path(f"jobs/{job.id}/output/final.mp4")
+
+    if not file_path or not file_path.is_file():
         raise HTTPException(status_code=404, detail=f"Output {kind} not ready for download")
 
-    file_path = storage.get_path(artifact.path)
-    media_type = "video/mp4" if kind == "video" else "audio/wav"
-    filename = f"lecture_dub_{job.id}.mp4" if kind == "video" else f"lecture_dub_{job.id}.wav"
 
     return FileResponse(
         path=str(file_path),
@@ -328,7 +383,8 @@ def download_artifact(
 @router.get("/{job_id}/download-url")
 def get_signed_download_url(
     job_id: str,
-    kind: str = Query("video", pattern="^(video|audio)$"),
+    kind: str = Query("video", pattern="^(video|audio|audio_mp3|audio_wav)$"),
+    format: str = Query("mp3", pattern="^(mp3|wav)$"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -338,8 +394,9 @@ def get_signed_download_url(
         raise HTTPException(status_code=404, detail="Job not found")
 
     token = storage.create_signed_token(job_id=job.id, kind=kind, expires_in_seconds=3600)
-    url = f"/api/jobs/{job.id}/download?kind={kind}&token={token}"
+    url = f"/api/jobs/{job.id}/download?kind={kind}&format={format}&token={token}"
     return {"download_url": url, "expires_in": 3600}
+
 
 
 @router.post("/retention-cleanup")

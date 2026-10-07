@@ -2,6 +2,28 @@
 
 All notable changes to the Lecture Dubber project will be documented in this file.
 
+## [Phase 5: Final Video Mux & Output Downloads] - 2026-10-07
+
+### Added
+- **Stream-Copy Video Muxer & AI Metadata ([5.1])**:
+  - `mux_video_and_audio` replacing original audio with `dub_mix.wav` via direct stream copy (`-c:v copy`), falling back to libx264 only when necessary (`backend/app/pipeline/video_muxer.py`).
+  - Injects AI-dubbed metadata tags: title, description comment, service name, and audio stream language tags (`-metadata:s:a:0 language=...`).
+  - FastStart flag (`-movflags +faststart`) applied for instant web streaming.
+- **Duration Match & A/V Sync Drift Verification ([5.2])**:
+  - Validates duration alignment between original video and dubbed audio mix.
+  - Automatically raises `AVSyncDriftError` and fails the job with a descriptive message if drift exceeds dynamic tolerance (`max(2.0, 0.05 * duration)`).
+- **Audio-Only Download Options ([5.3])**:
+  - Stage 9 generates both `final.mp4` and high-quality 192 kbps MP3 export (`dub_audio.mp3`) via `export_dub_mp3`.
+  - Download endpoints (`GET /api/jobs/{id}/download` and `GET /api/jobs/{id}/download-url`) updated to support `kind=video` (MP4), `kind=audio&format=mp3` (MP3), and `kind=audio&format=wav` (WAV).
+- **Honest Stage Time Estimates ([5.4])**:
+  - `time_estimator.py` models real hardware runtimes from Phase 0 benchmarks (GPU ~1.1x RTF, CPU ~2.0x RTF).
+  - API responses and SSE real-time events now return `estimated_seconds_remaining` and `estimated_total_seconds`.
+- **Reserved Lip-Sync Engine Interface Stub ([5.5])**:
+  - Maintained `LipSyncEngine` stub in `backend/app/engines/base.py` and reserved `PipelineStage.LIPSYNCING` in `state_machine.py` without loading models (ready for Phase 8).
+- **Automated Test Suite**:
+  - Added unit tests for video muxing (`test_video_muxer.py`), time estimation (`test_time_estimator.py`), and full Stage 9 muxing and download integration (`test_phase5_mux_pipeline.py`).
+  - Complete test suite expanded to **83 passing tests** with 100% pass rate.
+
 ## [Phase 4: Voice Synthesis, Timing Fit & Audio Mixing] - 2026-10-07
 
 ### Added
