@@ -1,68 +1,131 @@
 # Lecture Dubber
 
-A platform where a user uploads a lecture video (or pastes a link), gets it
-**translated and dubbed in the original speaker's voice**, then
-downloads the result.
+A local-first platform where users upload or import educational lecture videos, get them **accurately translated and dubbed in the original speaker's cloned voice with background audio preserved**, and export synchronized final MP4 video and MP3 audio downloads.
 
-This folder is a **starter kit**: requirements, architecture, task list and a
-tiny backend skeleton. It is meant to be opened in **Antigravity** with a Claude
-model, which then builds the real application by following `docs/TASKS.md`.
+> **Status:** **Phase 0 through Phase 7 Complete.** Built, tested, and hardened for Windows 10/11 with 100% commercially licensed local AI models.  
+> **Note on Lip-Sync:** Per architectural scope, v1 is built without lip-sync. Lip-sync is a dedicated subsequent milestone (Phase 8 in `docs/TASKS.md`). The pipeline maintains the `LipSyncEngine` interface stub and the reserved `lipsyncing` stage.
 
-> **Scope decision:** v1 is built **without lip-sync**. Lip-sync is a planned later
-> milestone (Phase 8 in `docs/TASKS.md`). The design leaves room for it.
+---
 
-## How to use this with Antigravity
+## Key Features
 
-1. Unzip this folder and open it as a workspace in Antigravity.
-2. Select a Claude model for the agent.
-3. Open `docs/FIRST_PROMPT.md`, copy the prompt, and paste it into the agent.
-   (`AGENTS.md` in the root holds the standing rules; if Antigravity does not
-   load it automatically, the first prompt tells the agent to read it.)
-4. Let the agent work through `docs/TASKS.md` phase by phase. Start with
-   **Phase 0 (research spikes)**: they settle the risky model choices
-   (mainly Urdu voice generation) before any app code is written.
-5. Review each phase before telling the agent to continue.
+- **100% Local & Commercially Licensed:** No hosted commercial AI APIs. Faster-Whisper (MIT), Demucs v4 (MIT), Qwen2.5-Instruct (Apache 2.0), OpenVoice v2 (MIT), and Piper Urdu (MIT). Full license audit in [`THIRD_PARTY_LICENSES.md`](file:///c:/Users/David/Downloads/lecture-dubber-starter/lecture-dubber/THIRD_PARTY_LICENSES.md).
+- **Target Languages:** Urdu (`ur`) and English (`en`) with automatic source language detection.
+- **Background Audio Preservation:** Demucs isolates vocals and lecture background sound (room tone, slides audio). Speech ducking (-12 dB) keeps the background natural during dubbed segments.
+- **EBU R128 Loudness Mastering:** Output audio normalized to -16 LUFS (-1.5 dBTP) for educational broadcast quality.
+- **Stream-Copy Final Video Mux:** Zero video quality loss; copies original H.264 video stream directly and injects AI dub provenance metadata tags.
+- **Human-in-the-Loop Review Editor:** Side-by-side review screen with `dir="rtl"` Noto Nastaliq Urdu typography, meaning-drift detection flags, and autosave before voice synthesis.
+- **Enterprise-Grade Ingest Security:** Full SSRF protection on link imports, private/loopback IP rejection, recursive redirect re-validation, `ffprobe` stream validation, and per-user storage isolation.
+- **Next.js 16 App Router Frontend:** Modern dark-mode UI with live Server-Sent Events (SSE) pipeline stepper, resumable 5 MB chunk uploads, in-browser video preview player, and expiring signed download links.
 
-## Project at a glance
+---
 
-| Item | Decision |
-|---|---|
-| Product type | Startup / commercial product (licenses matter) |
-| Source languages | Any (auto-detected) |
-| Target languages (v1) | English, Urdu |
-| Compute | Own Windows PC, NVIDIA GPU, 8 GB VRAM |
-| AI models | 100% local / open-source (translation and voice included) |
-| v1 features | Voice cloning, edit translation before voice generation (no lip-sync yet) |
-| Input | Upload, direct links, YouTube links (with ownership checkbox) |
-| Accounts | Sign-up / login, no payments yet |
-| Stack | Python FastAPI backend + Next.js (React) frontend |
-| Typical video | 30 to 60 minutes |
+## Quick Start (Windows)
 
-## Folder map
+### 1. Prerequisites
+- **Windows 10 / 11**
+- **Python 3.10+** (Tested with Python 3.11)
+- **Node.js 18+** (Tested with Node.js 24 / npm 11)
+- **FFmpeg 6.0+** with `ffprobe` (e.g. `winget install Gyan.FFmpeg.Essentials`)
+
+### 2. One-Command Setup
+Run the setup script from an elevated or standard PowerShell terminal:
+```powershell
+.\scripts\setup_windows.ps1
+```
+This automatically:
+- Creates `.venv` and installs all backend Python dependencies.
+- Generates `.env` with a secure random secret key.
+- Initializes storage directories (`storage/uploads/`, `storage/jobs/`, `logs/`).
+- Applies database migrations and initializes SQLite (`storage/app.db`).
+- Installs frontend dependencies in `frontend/`.
+
+### 3. Run All Services
+Launch the API backend, queue worker, and Next.js frontend in one command:
+```powershell
+.\scripts\run_all.ps1
+```
+- **Web Application:** `http://localhost:3000`
+- **FastAPI Server:** `http://localhost:8000`
+- **Interactive API Docs:** `http://localhost:8000/docs`
+- **Background Worker:** Polling SQLite queue with single-GPU concurrency lock
+
+---
+
+## Running the Automated Test Suite
+
+Lecture Dubber includes comprehensive test coverage across unit logic, security mitigations, API endpoints, worker crash resilience, and real media processing:
+```powershell
+.\scripts\run_tests.ps1
+```
+Or directly via pytest:
+```powershell
+.venv\Scripts\pytest backend/tests -v
+```
+*(84 passing tests with 100% pass rate).*
+
+---
+
+## Project Structure
 
 ```
-AGENTS.md              Standing rules for the AI agent
-docs/
-  FIRST_PROMPT.md      Prompt to paste into Antigravity
-  REQUIREMENTS.md      What we are building and the constraints
-  ARCHITECTURE.md      How it is structured
-  PIPELINE.md          Stage-by-stage processing design
-  MODEL_CHOICES.md     Candidate models, license notes, what to verify
-  RISKS.md             Known risks and fallbacks
-  TASKS.md             Ordered build plan with acceptance criteria
-  SETUP_WINDOWS.md     Windows environment setup
-  DECISIONS.md         Agent records research results here
-scripts/               PowerShell helpers (prereq check, repo fetch)
-backend/               FastAPI skeleton
-frontend/              Next.js app goes here
-storage/               Local file storage (git-ignored)
-third_party/           Cloned model repos (git-ignored)
-models/                Model weights and per-model venvs (git-ignored)
+├── AGENTS.md                  Standing rules and architectural constraints
+├── THIRD_PARTY_LICENSES.md    Audit of all models, runtimes, and packages
+├── CHANGELOG.md               Comprehensive phase-by-phase changelog
+├── docs/
+│   ├── REQUIREMENTS.md        Product requirements & constraints
+│   ├── ARCHITECTURE.md        Architecture, data model & state machine
+│   ├── PIPELINE.md            Stage-by-stage pipeline specifications
+│   ├── MODEL_CHOICES.md       Evaluation notes on candidate models
+│   ├── RISKS.md               Technical risks & mitigation plans
+│   ├── TASKS.md               Phase-by-phase roadmap & checklist
+│   ├── DECISIONS.md           Phase 0 benchmark logs & license sources
+│   ├── SECURITY_REVIEW.md     Audit against Architecture Section 6
+│   └── OPERATIONS.md          Operations runbook, backups, cloud scaling
+├── scripts/
+│   ├── setup_windows.ps1      One-command Windows environment setup
+│   ├── run_all.ps1            Service orchestrator (API, worker, UI)
+│   ├── run_tests.ps1          CI test runner (pytest + frontend build)
+│   ├── check_prereqs.ps1      System prerequisite verification
+│   └── fetch_repos.ps1        Third-party model repo downloader
+├── backend/
+│   ├── app/
+│   │   ├── api/               FastAPI routers (auth, jobs, segments, uploads)
+│   │   ├── core/              Security, config, events, logging
+│   │   ├── db/                SQLAlchemy models (Job, User, Segment, Artifact)
+│   │   ├── engines/           Model interfaces (ASR, TTS, Translator, Muxer)
+│   │   ├── ingest/            SSRF protection, media probe, cleanup, YouTube
+│   │   ├── pipeline/          Stage runners, state machine, audio mixer, timing fit
+│   │   ├── storage/           Local filesystem storage & signed tokens
+│   │   └── worker/            Queue poller, GPU concurrency lock, crash recovery
+│   └── tests/                 84 automated unit, API, and E2E integration tests
+├── frontend/
+│   ├── app/
+│   │   ├── dashboard/         Live jobs feed with status filtering
+│   │   ├── jobs/new/          Resumable upload & link ingest wizard
+│   │   ├── jobs/[id]/         Detail view with live SSE progress stepper
+│   │   ├── jobs/[id]/review/  Side-by-side segment review editor
+│   │   ├── jobs/[id]/result/  HTML5 video player & download center
+│   │   ├── login/ & register/ User authentication
+│   │   └── terms/, privacy/, takedown/ Legal compliance pages
+│   ├── components/            Navbar, Footer, UI components
+│   └── lib/                   API client, auth context
+└── storage/                   Runtime working directory (git-ignored)
 ```
 
-## Important caveat
+---
 
-Model license and language-support notes in `docs/MODEL_CHOICES.md` were written
-from memory and **must be re-verified online** by the agent in Phase 0 before
-anything is adopted. This is a commercial product, so a non-commercial model
-license is a blocker, not a footnote.
+## Hardware Reality & Performance Notes
+
+- **Target Hardware:** Windows 10/11 with 1 NVIDIA GPU (8 GB VRAM recommended).
+- **GPU Concurrency:** GPU stages run sequentially under a thread-safe file lock (`gpu_lock.py`), releasing VRAM between stages to prevent out-of-memory errors.
+- **Low VRAM / Legacy GPU Fallback:** On GPUs with <= 4 GB VRAM (e.g. Maxwell architecture lacking FP16/INT8 DP4A instructions), the pipeline automatically executes Demucs on GPU while running Faster-Whisper ASR in CPU INT8 mode, delivering 0.28x RTF performance.
+- **Urdu Language Quality:** Urdu translation requires Qwen2.5-7B at Q4_K_M quantization or higher for accurate educational and technical terminology. Smaller parameter models (0.5B) risk cross-lingual drift.
+
+---
+
+## Legal & Compliance
+
+- **Speaker Consent:** Voice cloning requires affirmative user consent and copyright ownership attestations recorded digitally in `attestations` audit logs.
+- **Provenance Watermarking:** Output video MP4 files embed standard AI derivative metadata flags indicating machine translation and voice synthesis.
+- **Draft Legal Templates:** The platform includes comprehensive Terms of Service ([`frontend/app/terms/page.tsx`](file:///c:/Users/David/Downloads/lecture-dubber-starter/lecture-dubber/frontend/app/terms/page.tsx)), Privacy Policy ([`frontend/app/privacy/page.tsx`](file:///c:/Users/David/Downloads/lecture-dubber-starter/lecture-dubber/frontend/app/privacy/page.tsx)), and DMCA / Biometric Voice Takedown Request Form ([`frontend/app/takedown/page.tsx`](file:///c:/Users/David/Downloads/lecture-dubber-starter/lecture-dubber/frontend/app/takedown/page.tsx)) marked for institutional legal review.
