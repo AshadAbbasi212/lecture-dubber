@@ -28,6 +28,10 @@ from backend.app.engines.separation.demucs_separator import DemucsSeparatorEngin
 from backend.app.engines.asr.faster_whisper_asr import FasterWhisperASREngine
 from backend.app.engines.translation.llm_translator import LocalLLMTranslator
 from backend.app.engines.base import TranscriptSegment, TranslatedSegment
+from backend.app.pipeline.reference_clip import build_reference_clip
+from backend.app.pipeline.timing_fit import calculate_timing_fit, apply_audio_time_stretch
+from backend.app.engines.tts.voice_synthesizer import VoiceSynthesizer
+from backend.app.pipeline.audio_mixer import assemble_timeline_vocals, mix_vocals_and_background
 from backend.app.storage.local import storage
 
 
@@ -361,12 +365,138 @@ class PipelineRunner:
 
         elif stage == PipelineStage.SYNTHESIZING:
             tts_key = f"{job_dir}/dub_vocals.wav"
-            storage.put(tts_key, b"FAKE_DUB_VOCALS_BYTES")
+
+            if self.mock_execution:
+                segments = self.db.query(Segment).filter(Segment.job_id == job.id).order_by(Segment.idx.asc()).all()
+                for seg in segments:
+                    seg_key = f"{job_dir}/tts/seg_{seg.idx:04d}.wav"
+                    if not storage.exists(seg_key):
+                        storage.put(seg_key, b"FAKE_TTS_SEG_BYTES")
+                    seg.tts_path = seg_key
+                    seg.tts_duration = max(0.5, seg.end - seg.start)
+                    seg.stretch_ratio = 1.0
+                self.db.commit()
+
+                if not storage.exists(tts_key):
+                    storage.put(tts_key, b"FAKE_DUB_VOCALS_BYTES")
+                self._record_artifact(job, "dub_vocals", tts_key, stage)
+                return
+
+            segments = self.db.query(Segment).filter(Segment.job_id == job.id).order_by(Segment.idx.asc()).all()
+            if not segments:
+                raise ValueError(f"No translation segments found to synthesize for job {job.id}")
+
+            clone_voice = options.get("clone_voice", True)
+            ref_clip_path = None
+            if clone_voice:
+                ref_clip_key = f"{job_dir}/audio/ref_clip.wav"
+                ref_clip_file = storage.get_path(ref_clip_key)
+                if ref_clip_file.is_file() and ref_clip_file.stat().st_size > 0:
+                    ref_clip_path = ref_clip_file
+                else:
+                    vocals_file = storage.get_path(f"{job_dir}/audio/vocals.wav")
+                    if not vocals_file.is_file():
+                        vocals_file = storage.get_path(f"{job_dir}/audio/original.wav")
+                    if vocals_file.is_file():
+                        try:
+                            ref_clip_path = build_reference_clip(
+                                vocals_path=vocals_file,
+                                segments=segments,
+                                output_path=ref_clip_file,
+                                target_duration=15.0
+                            )
+                            self._record_artifact(job, "reference_clip", ref_clip_key, stage)
+                        except Exception as e:
+                            logger.warning(f"Could not build reference clip for job {job.id}: {e}; proceeding without cloning")
+                            ref_clip_path = None
+
+            synthesizer = VoiceSynthesizer()
+            for i, seg in enumerate(segments):
+                seg_rel_key = f"{job_dir}/tts/seg_{seg.idx:04d}.wav"
+                seg_abs_path = storage.get_path(seg_rel_key)
+                seg_abs_path.parent.mkdir(parents=True, exist_ok=True)
+
+                # Checkpoint check: skip already synthesized segments (enables mid-stage crash recovery)
+                if seg.tts_duration and seg.tts_path and seg_abs_path.is_file() and seg_abs_path.stat().st_size > 0:
+                    logger.info(f"Segment {seg.idx} already synthesized ({seg.tts_duration:.2f}s); skipping.")
+                    continue
+
+                slot_duration = max(0.5, seg.end - seg.start)
+                prev_end = segments[i - 1].end if i > 0 else 0.0
+                avail_pre = max(0.0, seg.start - prev_end)
+                next_start = segments[i + 1].start if (i + 1 < len(segments)) else (seg.end + 10.0)
+                avail_post = max(0.0, next_start - seg.end)
+
+                raw_seg_path = seg_abs_path.with_suffix(".raw.wav")
+                try:
+                    raw_dur = synthesizer.synthesize_segment(
+                        text=seg.tgt_text,
+                        language=job.target_lang,
+                        out_path=raw_seg_path,
+                        reference_clip=ref_clip_path,
+                        clone_voice=clone_voice
+                    )
+
+                    fit_decision = calculate_timing_fit(
+                        original_duration=slot_duration,
+                        tts_duration=raw_dur,
+                        available_pre_silence=avail_pre,
+                        available_post_silence=avail_post
+                    )
+
+                    if fit_decision.status in ["stretched", "borrowed_silence"] and abs(fit_decision.effective_stretch_ratio - 1.0) > 0.02:
+                        apply_audio_time_stretch(raw_seg_path, seg_abs_path, fit_decision.effective_stretch_ratio)
+                    else:
+                        import shutil
+                        shutil.copy(raw_seg_path, seg_abs_path)
+
+                    probe = probe_media_file(seg_abs_path)
+                    seg.tts_path = seg_rel_key
+                    seg.tts_duration = probe.duration
+                    seg.stretch_ratio = fit_decision.effective_stretch_ratio
+                    self.db.commit()
+
+                    seg_progress = (i + 1) / len(segments)
+                    job.progress = compute_overall_progress(stage, seg_progress)
+                    self._notify_progress(job)
+                finally:
+                    if raw_seg_path.exists():
+                        raw_seg_path.unlink()
+
+            source_mp4 = storage.get_path(f"{job_dir}/source.mp4")
+            if source_mp4.is_file():
+                total_duration = probe_media_file(source_mp4).duration
+            else:
+                total_duration = max([s.end for s in segments], default=10.0) + 2.0
+
+            dub_vocals_path = storage.get_path(tts_key)
+            assemble_timeline_vocals(segments, total_duration, dub_vocals_path)
             self._record_artifact(job, "dub_vocals", tts_key, stage)
 
         elif stage == PipelineStage.MIXING:
             mix_key = f"{job_dir}/dub_mix.wav"
-            storage.put(mix_key, b"FAKE_DUB_MIX_BYTES")
+            if self.mock_execution:
+                if not storage.exists(mix_key):
+                    storage.put(mix_key, b"FAKE_DUB_MIX_BYTES")
+                self._record_artifact(job, "dub_mix", mix_key, stage)
+                return
+
+            dub_vocals_path = storage.get_path(f"{job_dir}/dub_vocals.wav")
+            if not dub_vocals_path.is_file():
+                raise FileNotFoundError(f"Dubbed vocals file missing for job {job.id}: {dub_vocals_path}")
+
+            bg_path = storage.get_path(f"{job_dir}/audio/background.wav")
+            mix_path = storage.get_path(mix_key)
+            ducking_db = float(options.get("ducking_db", 12.0))
+            target_lufs = float(options.get("target_lufs", -16.0))
+
+            mix_vocals_and_background(
+                dub_vocals_path=dub_vocals_path,
+                background_path=bg_path,
+                output_mix_path=mix_path,
+                ducking_db=ducking_db,
+                target_lufs=target_lufs
+            )
             self._record_artifact(job, "dub_mix", mix_key, stage)
 
         elif stage == PipelineStage.MUXING:

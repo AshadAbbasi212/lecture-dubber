@@ -58,11 +58,11 @@ Acceptance: on a 30-minute test lecture the job reaches `awaiting_review` with s
 
 ## Phase 4: Voice (stages 7 and 8)
 
-- [ ] 4.1 Reference-clip builder.
-- [ ] 4.2 TTS / voice-conversion engines per Phase 0 decision, English and Urdu.
-- [ ] 4.3 Timing-fit algorithm with unit tests (pure Python, no GPU).
-- [ ] 4.4 Timeline assembly, background mixing, ducking, loudness normalisation.
-- [ ] 4.5 Per-segment checkpointing so a crash resumes mid-stage.
+- [x] 4.1 Reference-clip builder.
+- [x] 4.2 TTS / voice-conversion engines per Phase 0 decision, English and Urdu.
+- [x] 4.3 Timing-fit algorithm with unit tests (pure Python, no GPU).
+- [x] 4.4 Timeline assembly, background mixing, ducking, loudness normalisation.
+- [x] 4.5 Per-segment checkpointing so a crash resumes mid-stage.
 
 Acceptance: audio-only dub of a 30-minute lecture, in sync within a defined tolerance, background preserved, listening test notes recorded.
 

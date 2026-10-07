@@ -2,6 +2,30 @@
 
 All notable changes to the Lecture Dubber project will be documented in this file.
 
+## [Phase 4: Voice Synthesis, Timing Fit & Audio Mixing] - 2026-10-07
+
+### Added
+- **Reference-Clip Builder ([4.1])**:
+  - `build_reference_clip` extracting clean 10–25s speech samples from separated vocals, normalized to -20 LUFS via EBU R128 loudnorm (`backend/app/pipeline/reference_clip.py`).
+  - Automatic candidate segment selection based on speech duration heuristics and fallback handling.
+- **Voice Synthesis & Cloning Architecture ([4.2])**:
+  - `VoiceSynthesizer` coordinating TTS generation and voice conversion timbre transfer (`backend/app/engines/tts/voice_synthesizer.py`).
+  - Swappable interface support: Fallback human-formant speech synthesis, Piper Urdu ONNX / MeloTTS English, and OpenVoice v2 tone color converter.
+- **Timing-Fit Algorithm & Audio Time-Stretching ([4.3])**:
+  - `calculate_timing_fit` implementing pure Python decision logic for lecture timing sync (`backend/app/pipeline/timing_fit.py`).
+  - Mild ratio standard time-stretch (0.85–1.15x), silence borrowing with 1.25x stretch cap (1.15–1.35x), and concise retranslation retry triggers (>1.35x).
+  - Audio time-stretching with FFmpeg `rubberband` / `atempo` (`apply_audio_time_stretch`).
+- **Sample-Accurate Timeline Assembly & Dynamic Ducking ([4.4])**:
+  - `assemble_timeline_vocals` placing dubbed segments at exact timestamps using numpy array buffering to avoid CLI length constraints (`backend/app/pipeline/audio_mixer.py`).
+  - Dynamic background ducking (-12 dB attenuation during speech with 200ms smooth release window).
+  - EBU R128 loudness normalization (-16 LUFS, -1.5 dBTP) for educational listening standards (`mix_vocals_and_background`).
+- **Per-Segment Checkpointing & Crash Resilience ([4.5])**:
+  - Stage 7 synthesizes each segment into `jobs/{id}/tts/seg_XXXX.wav` and immediately checkpoints `tts_path`, `tts_duration`, and `stretch_ratio` in SQLite.
+  - Worker crash or interruption resumes mid-stage without re-synthesizing completed segments.
+- **Automated Test Suite**:
+  - Unit tests for timing fit (`test_timing_fit.py`), reference clip builder (`test_reference_clip.py`), audio mixer (`test_audio_mixer.py`), and full voice pipeline integration (`test_phase4_voice_pipeline.py`).
+  - Full suite expanded to 75 tests passing with 100% success.
+
 ## [Phase 3: Speech Understanding & Translation] - 2026-10-07
 
 ### Added
