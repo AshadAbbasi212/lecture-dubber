@@ -1,0 +1,16 @@
+.env
+storage/*
+!storage/.gitkeep
+third_party/*
+!third_party/.gitkeep
+models/*
+!models/.gitkeep
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+.next/
+*.log
+.pytest_cache/
+spikes/.venv/

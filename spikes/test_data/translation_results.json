@@ -1,0 +1,132 @@
+{
+  "en_to_ur": [
+    {
+      "idx": 1,
+      "en": "Today we will study gradient descent and backpropagation in deep neural networks.",
+      "ur": "دینیا که ہم میں سے دوست جاتا ہے، اسے تکلیف کریسیون و پرپابجے کی نظرات گورنال‌شناسان را در دو",
+      "time_s": 12.07
+    },
+    {
+      "idx": 2,
+      "en": "A binary search tree has a lookup time complexity of O(log n) on average.",
+      "ur": "ویژگی‌های یک بیستپرت کسی شامل از جملات زیر است: O(log n) مقدار پردازش در نظر گرفتن آنها معمولاً متوسط.",
+      "time_s": 11.79
+    },
+    {
+      "idx": 3,
+      "en": "Mitochondria are often referred to as the powerhouse of the biological cell.",
+      "ur": "میں ہوپے کا جھائیں ہندس اس سے گلی دیا ہے۔",
+      "time_s": 6.58
+    },
+    {
+      "idx": 4,
+      "en": "Newton's second law states that force equals mass multiplied by acceleration.",
+      "ur": "نیوتنیک دوم کلیدی است که فرآیند مقدار برابر با گرمیت و اسپانیکی را قرار می‌دهد.",
+      "time_s": 9.76
+    },
+    {
+      "idx": 5,
+      "en": "Quantum computing uses qubits that can exist in a superposition of states.",
+      "ur": "کیوگرافیک کے لئے چھوٹا سیسٹ کر میں کہتھے۔",
+      "time_s": 6.31
+    },
+    {
+      "idx": 6,
+      "en": "Photosynthesis converts carbon dioxide and sunlight into glucose and oxygen.",
+      "ur": "کسی‌ها که گرم‌پر و سوئیدا را در نظر بگیرند، از جمله کم‌بازی‌ها و سوئیدا را به طور معمولی تبدیل می‌",
+      "time_s": 13.77
+    },
+    {
+      "idx": 7,
+      "en": "Operating systems manage hardware resources through virtual memory and scheduling.",
+      "ur": "操作系统通过虚拟内存和调度管理硬件资源。",
+      "time_s": 2.37
+    },
+    {
+      "idx": 8,
+      "en": "In statistics, the central limit theorem explains why normal distributions are common.",
+      "ur": "ویژگی‌های مادی، تکرار گرم آنها را از نظر ملی در کاربرد دارد.",
+      "time_s": 7.74
+    },
+    {
+      "idx": 9,
+      "en": "Supply and demand curves determine the equilibrium market price of goods.",
+      "ur": "اقتباس: اقتصادیت‌ها و مالی‌های دسترسی به آن‌ها تأثیر را در سطح گام‌های اقتصادی قرار دارد.",
+      "time_s": 10.0
+    },
+    {
+      "idx": 10,
+      "en": "Plate tectonics explains continental drift and the cause of major earthquakes.",
+      "ur": "پلتکن کیزے گروائشان و اسکریپت میں جو سبھی کیا ہے۔",
+      "time_s": 7.17
+    }
+  ],
+  "ur_to_en": [
+    {
+      "idx": 1,
+      "ur": "آج ہم ڈیپ نیورل نیٹ ورکس میں گریڈینٹ ڈیسینٹ اور بیک پروپیگیشن کا مطالعہ کریں گے۔",
+      "en": "The lecture discusses the role of the Department of Information Technology and the National Cyber Security Agency (NCSA) in enhancing cybersecurity measures for government entities.",
+      "time_s": 6.27
+    },
+    {
+      "idx": 2,
+      "ur": "بائنری سرچ ٹری میں اوسطاً تلاش کرنے کی لاگت لاگ این ہوتی ہے۔",
+      "en": "The speaker is trying to achieve success by working hard and persisting through difficulties.",
+      "time_s": 3.54
+    },
+    {
+      "idx": 3,
+      "ur": "مائٹوکونڈریا کو عام طور پر خلیے کا پاور ہاؤس کہا جاتا ہے۔",
+      "en": "The lecture is about the importance of education and its role in shaping individuals for success in life.",
+      "time_s": 5.29
+    },
+    {
+      "idx": 4,
+      "ur": "نیوٹن کا دوسرا قانون بیان کرتا ہے کہ قوت ماس اور ایکسلریشن کے ضرب کے برابر ہے۔",
+      "en": "The law of the new constitution states that the strength and power of the state is proportional to its population.",
+      "time_s": 5.26
+    },
+    {
+      "idx": 5,
+      "ur": "کوانٹم کمپیوٹنگ کیوبٹس کا استعمال کرتی ہے جو سپر پوزیشن میں رہ سکتے ہیں۔",
+      "en": "The use of koontam kampongtan ganj is prohibited under s. 124 of the Penal Code.",
+      "time_s": 5.96
+    },
+    {
+      "idx": 6,
+      "ur": "فوٹو سنتھیسس کاربن ڈائی آکسائیڈ اور سورج کی روشنی کو گلوکوز اور آکسیجن میں تبدیل کرتا ہے۔",
+      "en": "The given Urdu text is already in English. No translation is needed for this sentence.",
+      "time_s": 3.79
+    },
+    {
+      "idx": 7,
+      "ur": "آپریٹنگ سسٹم ورچوئل میموری اور شیڈولنگ کے ذریعے ہارڈ ویئر کے وسائل کا انتظام کرتے ہیں۔",
+      "en": "The speaker was present at the conference organized by the United Nations and attended the meeting of the World Health Organization.",
+      "time_s": 4.91
+    },
+    {
+      "idx": 8,
+      "ur": "شماریات میں مرکزی حد کا نظریہ بتاتا ہے کہ نارمل ڈسٹری بیوشن کیوں عام ہے۔",
+      "en": "The sample text provided is already in English. No translation was necessary.",
+      "time_s": 3.18
+    },
+    {
+      "idx": 9,
+      "ur": "طلب اور رسد کے خطوط اشیاء کی مارکیٹ میں متوازن قیمت کا تعین کرتے ہیں۔",
+      "en": "The price of the roads with sharp edges is reasonable.",
+      "time_s": 2.58
+    },
+    {
+      "idx": 10,
+      "ur": "پلیٹ ٹیکٹونکس براعظموں کے بہاؤ اور بڑے زلزلوں کی وجوہات کی وضاحت کرتی ہے۔",
+      "en": "The earthquake caused widespread destruction and loss of life.",
+      "time_s": 2.42
+    }
+  ],
+  "length_control": [
+    {
+      "orig": "ویژگی‌های یک بیستپرت کسی شامل از جملات زیر است: O(log n) مقدار پردازش در نظر گرفتن آنها معمولاً متوسط.",
+      "short": "ویژگی‌های این دسترسی کلیدی شامل:\n- نمودار روزنامه‌ای معمولاً\n- تعداد کلاس‌ها و فروشگاه‌ها\n- سرعت زمان پاسخ به"
+    }
+  ]
+}
