@@ -124,14 +124,14 @@ def mix_vocals_and_background(
     kernel = np.ones(window_size) / window_size
     envelope = np.convolve(v_mono, kernel, mode="same")
 
-    # Ducking gain: 1.0 when silent, 10^(-ducking_db/20) when speech active
-    attenuation_factor = 10.0 ** (-ducking_db / 20.0)
-    speech_threshold = 0.015
+    # Ducking gain: 1.0 when silent, 0.0 (full mute) if ducking_db >= 30, else 10^(-ducking_db/20)
+    attenuation_factor = 0.0 if ducking_db >= 30.0 else (10.0 ** (-ducking_db / 20.0))
+    speech_threshold = 0.005
 
     # Smooth ducking mask
     is_speech = envelope > speech_threshold
-    # Smooth mask with 200ms release window
-    release_samples = int(v_sr * 0.20)
+    # Smooth mask with 150ms release window
+    release_samples = int(v_sr * 0.15)
     smooth_mask = np.convolve(is_speech.astype(np.float32), np.ones(release_samples) / release_samples, mode="same")
     smooth_mask = np.clip(smooth_mask, 0.0, 1.0)
 

@@ -27,6 +27,59 @@ class FallbackTTSEngine(TTSEngine):
         out_file = Path(out_path).resolve()
         out_file.parent.mkdir(parents=True, exist_ok=True)
 
+        if language == "en":
+            # Priority 1: High-fidelity local neural Piper TTS with natural South Asian / Eastern accent
+            try:
+                import sys
+                piper_model = Path(__file__).resolve().parent.parent.parent.parent.parent / "models" / "tts" / "piper" / "reza.onnx"
+                if not piper_model.is_file():
+                    piper_model = Path("models/tts/piper/reza.onnx").resolve()
+
+                if piper_model.is_file():
+                    spikes_py = Path(__file__).resolve().parent.parent.parent.parent.parent / "spikes" / ".venv" / "Scripts" / "python.exe"
+                    py_bin = str(spikes_py) if spikes_py.is_file() else sys.executable
+                    p = subprocess.Popen(
+                        [py_bin, "-m", "piper", "-m", str(piper_model), "-f", str(out_file)],
+                        stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True
+                    )
+                    p.communicate(text)
+                    if p.returncode == 0 and out_file.exists() and out_file.stat().st_size > 100:
+                        probe = probe_media_file(out_file)
+                        return probe.duration
+            except Exception as e:
+                logger.warning(f"Piper neural TTS fallback to SAPI: {e}")
+
+            # Priority 2: Windows SAPI David
+            try:
+                import sys
+                import base64
+                if sys.platform == "win32":
+                    encoded_text = base64.b64encode(text.encode("utf-8")).decode("ascii")
+                    ps_cmd = f"""
+Add-Type -AssemblyName System.Speech
+$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
+$synth.Rate = 0
+$bytes = [System.Convert]::FromBase64String('{encoded_text}')
+$txt = [System.Text.Encoding]::UTF8.GetString($bytes)
+$synth.SetOutputToWaveFile('{str(out_file)}')
+$synth.Speak($txt)
+$synth.Dispose()
+"""
+                    res = subprocess.run(
+                        ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_cmd],
+                        capture_output=True,
+                        text=True,
+                        timeout=30
+                    )
+                    if res.returncode == 0 and out_file.exists() and out_file.stat().st_size > 100:
+                        probe = probe_media_file(out_file)
+                        return probe.duration
+            except Exception as e:
+                logger.warning(f"Windows SAPI synthesis fallback to audio tone: {e}")
+
         # Estimate duration from characters (Urdu ~11 chars/s, English ~14 chars/s)
         rate = 11.0 if language == "ur" else 14.0
         char_count = len(text.strip())

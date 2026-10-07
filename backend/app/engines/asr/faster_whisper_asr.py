@@ -33,7 +33,7 @@ class FasterWhisperASREngine(ASREngine):
 
         return sys.executable
 
-    def transcribe(self, audio_path: str, language: Optional[str] = None) -> ASRResult:
+    def transcribe(self, audio_path: str, language: Optional[str] = None, task: str = "transcribe") -> ASRResult:
         in_file = Path(audio_path).resolve()
         if not in_file.is_file():
             raise FileNotFoundError(f"Audio file for ASR not found: {audio_path}")
@@ -46,7 +46,8 @@ class FasterWhisperASREngine(ASREngine):
             "--audio", str(in_file),
             "--model", self.model_size,
             "--device", "auto",
-            "--compute-type", settings.WHISPER_COMPUTE_TYPE
+            "--compute-type", settings.WHISPER_COMPUTE_TYPE,
+            "--task", task
         ]
         if language:
             cmd.extend(["--language", language])

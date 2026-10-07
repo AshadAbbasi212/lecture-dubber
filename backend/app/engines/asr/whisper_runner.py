@@ -18,7 +18,7 @@ except ImportError:
     sys.exit(1)
 
 
-def run_transcription(audio_path: Path, model_size: str = "base", language: str = None, device: str = "auto", compute_type: str = "auto"):
+def run_transcription(audio_path: Path, model_size: str = "base", language: str = None, device: str = "auto", compute_type: str = "auto", task: str = "transcribe"):
     import torch
 
     # Automatic device & compute type determination based on hardware capabilities
@@ -43,6 +43,7 @@ def run_transcription(audio_path: Path, model_size: str = "base", language: str 
     segments_gen, info = model.transcribe(
         str(audio_path),
         language=language,
+        task=task,
         word_timestamps=True,
         vad_filter=True,
         vad_parameters=dict(min_silence_duration_ms=500)
@@ -92,11 +93,12 @@ def main():
     parser.add_argument("--language", default=None, help="Forced language code (optional)")
     parser.add_argument("--device", default="auto", choices=["auto", "cuda", "cpu"])
     parser.add_argument("--compute-type", default="auto")
+    parser.add_argument("--task", default="transcribe", choices=["transcribe", "translate"])
     args = parser.parse_args()
 
     try:
         lang = args.language if args.language and args.language != "None" else None
-        res = run_transcription(Path(args.audio), args.model, lang, args.device, args.compute_type)
+        res = run_transcription(Path(args.audio), args.model, lang, args.device, args.compute_type, task=args.task)
         print(json.dumps(res, ensure_ascii=False))
     except Exception as e:
         print(json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
