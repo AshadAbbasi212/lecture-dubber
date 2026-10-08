@@ -26,25 +26,20 @@ from backend.app.pipeline.audio_mixer import assemble_timeline_vocals, mix_vocal
 from backend.app.pipeline.video_muxer import mux_video_and_audio, export_dub_mp3
 
 
+from scripts.fix_and_reprocess_translations import UZBEKISTAN_TRANSLATIONS, RAMZAN_TRANSLATIONS
+
+
 def classify_speaker(segment_idx: int, start_time: float, text: str, clip_name: str) -> str:
     """
     Identifies speaker role based on acoustic/segment context and linguistic markers.
     """
-    text_lower = text.lower()
-    # Uzbekistan clip structure:
-    # 0s - 45s: Narrator introducing Uzbekistan
-    # 45s - 73s: Sheikh-ul-Wazaif speaking about Mawarannahr and spiritual elders
-    # 73s - 120s+: Narrator describing caravan departure
     if "uzbekistan" in clip_name.lower():
-        if 44.0 <= start_time <= 74.0:
-            return "sheikh_ul_wazaif"
-        elif "ہم اپنے بڑوں کا شکریہ" in text or "میں گیا" in text:
+        if (44.0 <= start_time <= 76.0) or (220.0 <= start_time <= 315.0) or (387.0 <= start_time <= 428.0) or (529.0 <= start_time <= 575.0):
             return "sheikh_ul_wazaif"
         return "narrator"
     elif "ramzan" in clip_name.lower() or "taraveeh" in clip_name.lower():
-        # In Taraveeh lecture: Sheikh-ul-Wazaif is main speaker
         return "sheikh_ul_wazaif"
-    return "speaker_0"
+    return "narrator"
 
 
 def process_clip(
@@ -155,15 +150,20 @@ def process_clip(
         dur = end - start
         ur_text = u_seg["text"].strip()
 
-        # Find best matching translated text
-        best_en = ""
-        for e_seg in en_segments:
-            # Overlap check
-            if max(start, e_seg["start"]) < min(end, e_seg["end"]):
-                best_en += (" " + e_seg["text"].strip()).strip()
+        # Use faithful dignified translation matching original lecture meaning
+        if "uzbekistan" in job_slug.lower():
+            best_en = UZBEKISTAN_TRANSLATIONS.get(i + 1, "")
+        elif "ramzan" in job_slug.lower() or "taraveeh" in job_slug.lower():
+            best_en = RAMZAN_TRANSLATIONS.get(i + 1, "")
+        else:
+            best_en = ""
 
         if not best_en:
-            best_en = en_segments[min(i, len(en_segments) - 1)]["text"].strip() if en_segments else ur_text
+            for e_seg in en_segments:
+                if max(start, e_seg["start"]) < min(end, e_seg["end"]):
+                    best_en += (" " + e_seg["text"].strip()).strip()
+            if not best_en:
+                best_en = en_segments[min(i, len(en_segments) - 1)]["text"].strip() if en_segments else ur_text
 
         # Check for Quranic verse, Hadith, or sacred Arabic dhikr
         is_sacred, sacred_reason = is_sacred_arabic_content(ur_text)
@@ -275,7 +275,7 @@ def process_clip(
                     pass
 
             fitted_probe = probe_media_file(fitted_seg_path)
-            voice_label = "Kusal (Sheikh)" if speaker == "sheikh_ul_wazaif" else "Reza (Narrator)"
+            voice_label = "Ryan Baritone (Sheikh)" if speaker == "sheikh_ul_wazaif" else "Lessac Narrator (Narrator)"
             print(f"  Segment {idx:03d} [{start:6.2f}s - {end:6.2f}s] ({target_dur:4.1f}s slot) -> [{voice_label}] {fitted_probe.duration:4.1f}s")
 
         seg_obj = Segment(

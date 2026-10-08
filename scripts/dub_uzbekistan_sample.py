@@ -177,13 +177,15 @@ def main():
         raw_seg_path = tts_dir / f"seg_{idx}_raw.wav"
         fitted_seg_path = tts_dir / f"seg_{idx}_fitted.wav"
 
-        # Synthesize English audio via Windows SAPI David
+        # Synthesize English audio with distinct speaker neural models
         synthesizer.synthesize_segment(
             text=tgt_text,
             language="en",
             out_path=raw_seg_path,
             reference_clip=ref_clip_path,
-            clone_voice=False
+            clone_voice=False,
+            speaker=seg["speaker"],
+            target_duration=target_dur
         )
 
         raw_probe = probe_media_file(raw_seg_path)
@@ -234,10 +236,10 @@ def main():
         dub_vocals_path=dubbed_vocals_wav,
         background_path=bg_wav,
         output_mix_path=dub_mix_wav,
-        ducking_db=36.0,
+        ducking_db=12.0,
         target_lufs=-16.0
     )
-    print(f"  Mastered Audio Mix: {dub_mix_wav.name} (-16 LUFS, background silenced during speech)")
+    print(f"  Mastered Audio Mix: {dub_mix_wav.name} (-16 LUFS, background ducked smoothly by -12 dB)")
 
     # Step 6: Video Muxing & MP3 Export
     print(f"\n[Stage 6/6] Muxing Final Dubbed Video...")
