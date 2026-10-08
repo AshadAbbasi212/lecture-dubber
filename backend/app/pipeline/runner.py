@@ -524,13 +524,27 @@ class PipelineRunner:
             if not audio_path.is_file():
                 raise FileNotFoundError(f"Dubbed audio mix missing for job {job.id}: {audio_path}")
 
+            segments = self.db.query(Segment).filter(Segment.job_id == job.id).order_by(Segment.idx.asc()).all()
+            srt_path = None
+            if options.get("generate_subtitles", True) and segments:
+                from backend.app.pipeline.subtitle_generator import generate_srt
+                srt_key = f"{job_dir}/output/subtitles.srt"
+                srt_file = storage.get_path(srt_key)
+                try:
+                    generate_srt(segments, srt_file, include_speaker=False)
+                    self._record_artifact(job, "subtitles_srt", srt_key, stage)
+                    srt_path = srt_file
+                except Exception as esub:
+                    logger.warning(f"Could not generate subtitles for job {job.id}: {esub}")
+
             # Mux video with dubbed audio, verify duration match & A/V sync drift
             mux_video_and_audio(
                 video_path=video_path,
                 audio_path=audio_path,
                 output_path=out_video_path,
                 target_lang=job.target_lang or "ur",
-                tolerance_seconds=2.0
+                tolerance_seconds=2.0,
+                subtitle_path=srt_path
             )
 
             # Export MP3 audio for audio-only download option
