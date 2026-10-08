@@ -30,81 +30,37 @@ class FallbackTTSEngine(TTSEngine):
         out_file.parent.mkdir(parents=True, exist_ok=True)
 
         if language == "en":
-            # Priority 1: High-clarity neural Piper TTS with crystal-clear English enunciation
-            try:
-                import sys
-                piper_dir = Path(__file__).resolve().parent.parent.parent.parent.parent / "models" / "tts" / "piper"
-                if not piper_dir.is_dir():
-                    piper_dir = Path("models/tts/piper").resolve()
-
-                spk_str = (speaker or "").lower()
-                is_sheikh = any(k in spk_str for k in ["sheikh", "speaker_1", "sheikh_ul_wazaif", "imam", "scholar"])
-
-                # Revert to previous high-clarity accent models:
-                # Kusal: Clear baritone scholar voice for Sheikh-ul-Wazaif
-                # Reza: Clear documentary narrator voice
-                if is_sheikh:
-                    chosen_model = piper_dir / "kusal.onnx"
-                else:
-                    chosen_model = piper_dir / "reza.onnx"
-
-                # Fallback if chosen model not present
-                if not chosen_model.is_file():
-                    chosen_model = piper_dir / "reza.onnx" if (piper_dir / "reza.onnx").is_file() else piper_dir / "kusal.onnx"
-
-                if chosen_model.is_file():
-                    spikes_py = Path(__file__).resolve().parent.parent.parent.parent.parent / "spikes" / ".venv" / "Scripts" / "python.exe"
-                    py_bin = str(spikes_py) if spikes_py.is_file() else sys.executable
-
-                    words = len(text.strip().split())
-                    # Base conversational pacing: Reza ~2.0 words/s, Kusal ~2.8 words/s
-                    base_rate = 2.8 if is_sheikh else 2.0
-                    est_dur = max(words / base_rate, 1.0)
-                    if target_duration and target_duration > 0:
-                        desired_dur = target_duration * 0.88
-                        ratio = desired_dur / est_dur
-                        max_ls = 1.75 if is_sheikh else 1.50
-                        length_scale = round(min(max_ls, max(0.90, ratio)), 2)
-                    else:
-                        length_scale = 1.15
-
-                    cmd = [
-                        py_bin, "-m", "piper",
-                        "-m", str(chosen_model),
-                        "-f", str(out_file),
-                        "--length-scale", str(length_scale),
-                        "--sentence-silence", "0.35"
-                    ]
-
-                    p = subprocess.Popen(
-                        cmd,
-                        stdin=subprocess.PIPE,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        text=True,
-                        encoding="utf-8",
-                        errors="replace"
-                    )
-                    p.communicate(text)
-                    if p.returncode == 0 and out_file.exists() and out_file.stat().st_size > 100:
-                        probe = probe_media_file(out_file)
-                        return probe.duration
-            except Exception as e:
-                logger.warning(f"Piper neural TTS fallback to SAPI: {e}")
-
-            # Priority 2: Windows SAPI David
+            # Priority 1: High-clarity native Windows SAPI voice (Microsoft David Desktop)
+            # Replaces South Asian accent with standard clear English voice for crisp, understandable enunciation.
             try:
                 import sys
                 import base64
                 if sys.platform == "win32":
                     encoded_text = base64.b64encode(text.encode("utf-8")).decode("ascii")
+
+                    # Smooth speaking rate adaptation based on target slot duration
+                    words = len(text.strip().split())
+                    base_rate = 2.5  # ~150 words per minute
+                    est_dur = max(words / base_rate, 0.8)
+                    if target_duration and target_duration > 0:
+                        ratio = est_dur / target_duration
+                        # SAPI rate ranges from -10 to 10. Map gently to [-3, 3] to keep natural cadence
+                        rate_val = int(round((ratio - 1.0) * 4.0))
+                        rate_val = max(-3, min(3, rate_val))
+                    else:
+                        rate_val = 0
+
+                    escaped_out = str(out_file).replace("'", "''")
                     ps_cmd = f"""
 Add-Type -AssemblyName System.Speech
 $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
-$synth.Rate = 0
+try {{
+    $synth.SelectVoice('Microsoft David Desktop')
+}} catch {{}}
+$synth.Rate = {rate_val}
 $bytes = [System.Convert]::FromBase64String('{encoded_text}')
 $txt = [System.Text.Encoding]::UTF8.GetString($bytes)
-$synth.SetOutputToWaveFile('{str(out_file)}')
+$synth.SetOutputToWaveFile('{escaped_out}')
 $synth.Speak($txt)
 $synth.Dispose()
 """
@@ -118,7 +74,7 @@ $synth.Dispose()
                         probe = probe_media_file(out_file)
                         return probe.duration
             except Exception as e:
-                logger.warning(f"Windows SAPI synthesis fallback to audio tone: {e}")
+                logger.warning(f"Windows SAPI David synthesis fallback to audio tone: {e}")
 
         # Estimate duration from characters (Urdu ~11 chars/s, English ~14 chars/s)
         rate = 11.0 if language == "ur" else 14.0

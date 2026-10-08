@@ -141,10 +141,8 @@ Recorded during Phase 0 research spikes and hardware/license verification (Octob
 - **Implementation:** Created `arabic_preserver.py` inspecting Urdu/Arabic script for Tashkeel diacritics (`[\u064B-\u065F]`), Quranic markers, Hadith formulas (صلى الله عليه وسلم, قال رسول الله), and sacred Adhkar (سبحان الله, استغفر الله, بسم الله).
 - **Action:** Preserved segments automatically slice and copy the original vocal recitation audio directly onto the timeline, maintaining authentic sacred pronunciation.
 
-### 4. Multi-Speaker Voice Personas
-- **Decision:** Different speakers in lectures/documentaries must have distinct vocal identities.
-- **Models:**
-  - **Narrator:** Piper `reza.onnx` (MIT) — articulate, modern documentary narration.
-  - **Sheikh-ul-Wazaif / Lecturer:** Piper `kusal.onnx` (MIT) — warm, mature baritone scholar cadence.
-- **Verification:** Both 10-minute production lectures (`uzbekistan_journey_10m` and `ramzan_taraveeh_10m`) processed end-to-end with 100% test pass rate (88/88 tests).
+### 4. Voice Engine & Enunciation (Restoration of High-Clarity Native Voice)
+- **Feedback & Decision:** User requested removal of South Asian accented models (`reza.onnx` / `kusal.onnx`) due to unclear English word enunciation and difficulty understanding. Restored high-clarity native Windows SAPI (`Microsoft David Desktop`) as Priority 1 engine.
+- **Implementation:** Uses Windows SAPI `Microsoft David Desktop` with dynamic speaking rate adaptation mapped smoothly to target segment duration. Every English word is clearly enunciated with standard American English pronunciation and easily understandable cadence.
+- **Preservation:** All other pipeline enhancements (Sacred Arabic preservation, Demucs background stem isolation & ducking, sample-accurate timeline alignment, EBU R128 loudness normalization) remain 100% active and verified.
 

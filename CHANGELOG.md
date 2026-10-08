@@ -9,9 +9,9 @@ All notable changes to the Lecture Dubber project will be documented in this fil
   - Quranic verses, Hadith citations, and sacred Adhkar (e.g. Tashkeel diacritics, blessings upon the Prophet) are detected automatically.
   - Slices original vocal audio verbatim onto the timeline so sacred recitations are preserved without English translation or synthetic artifacts.
   - Added test suite `backend/tests/test_arabic_preserver.py` (4/4 passing).
-- **Multi-Speaker Neural Routing**:
-  - Distinct neural ONNX voices: Piper `reza.onnx` for documentary narration and Piper `kusal.onnx` for Sheikh-ul-Wazaif / scholar sermons.
-  - Speaker tagging in timeline automatically routes segments to their corresponding vocal persona.
+- **High-Clarity Voice Synthesis (Microsoft David Engine)**:
+  - Replaced South Asian accented models with high-clarity native Windows SAPI Microsoft David Desktop, ensuring crisp, crystal-clear American English enunciation and complete intelligibility.
+  - Pacing is dynamically adapted to target segment slot duration so speech remains natural and understandable.
 - **Pacing Optimization & Stutter Elimination**:
   - Implemented dynamic `--length-scale` pacing calculated natively per segment (`target_duration / expected_duration`), eliminating robotic phase-vocoder `atempo` chopping and stuttering.
 - **Background Music Preservation & Broadcast Ducking**:

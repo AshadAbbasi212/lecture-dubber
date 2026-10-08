@@ -53,11 +53,12 @@ def process_clip(
     output_video_path: Path,
     output_mp3_path: Path,
     output_transcript_path: Path,
-    max_duration_seconds: float = 600.0  # 10 minutes
+    max_duration_seconds: float = 600.0,  # 10 minutes
+    force_tts: bool = False
 ):
     print("\n" + "=" * 75)
     print(f"PROCESSING CLIP: {video_path.name}")
-    print(f"Slug: {job_slug} | Target Duration: {max_duration_seconds}s")
+    print(f"Slug: {job_slug} | Target Duration: {max_duration_seconds}s | Force TTS: {force_tts}")
     print("=" * 75)
 
     work_dir = ROOT_DIR / "storage" / f"job_{job_slug}"
@@ -193,8 +194,8 @@ def process_clip(
             f.write(f"  URDU:    {s['ur_text']}\n")
             f.write(f"  ENGLISH: {s['en_text']}\n\n")
 
-    # 5. Multi-Speaker Neural Voice Synthesis & Pacing Optimization
-    print(f"\n[Stage 5/7] Multi-Speaker Neural Speech Synthesis (Reza & Kusal Models)...")
+    # 5. High-Clarity Voice Synthesis (Microsoft David Engine)
+    print(f"\n[Stage 5/7] High-Clarity English Speech Synthesis (Microsoft David Engine)...")
     synthesizer = VoiceSynthesizer()
     segment_models = []
 
@@ -212,7 +213,7 @@ def process_clip(
         speaker = s["speaker"]
         fitted_seg_path = tts_dir / f"seg_{idx:03d}_fitted.wav"
 
-        if fitted_seg_path.exists() and fitted_seg_path.stat().st_size > 1000:
+        if not force_tts and fitted_seg_path.exists() and fitted_seg_path.stat().st_size > 1000:
             seg_obj = Segment(
                 id=idx,
                 job_id=job_slug,
@@ -358,6 +359,7 @@ def main():
     clip2_out_mp3 = ROOT_DIR / "dub_audio_ramzan_taraveeh_10min.mp3"
     clip2_out_trans = ROOT_DIR / "ramzan_taraveeh_10min_transcript.json"
 
+    force_tts = True  # Ensure fresh synthesis with Microsoft David high-clarity voice
     results = []
 
     # Process Clip 1
@@ -368,7 +370,8 @@ def main():
             output_video_path=clip1_out_video,
             output_mp3_path=clip1_out_mp3,
             output_transcript_path=clip1_out_trans,
-            max_duration_seconds=600.0
+            max_duration_seconds=600.0,
+            force_tts=force_tts
         )
         results.append(res1)
 
@@ -380,7 +383,8 @@ def main():
             output_video_path=clip2_out_video,
             output_mp3_path=clip2_out_mp3,
             output_transcript_path=clip2_out_trans,
-            max_duration_seconds=600.0
+            max_duration_seconds=600.0,
+            force_tts=force_tts
         )
         results.append(res2)
 
