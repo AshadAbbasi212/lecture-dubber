@@ -173,6 +173,12 @@ class ApiClient {
     });
   }
 
+  async completeUpload(uploadId: string): Promise<{ upload_id: string; file_path: string; duration: number }> {
+    return this.request<{ upload_id: string; file_path: string; duration: number }>(`/uploads/${uploadId}/complete`, {
+      method: "POST",
+    });
+  }
+
   // Jobs
   async listJobs(): Promise<Job[]> {
     return this.request<Job[]>("/jobs");
@@ -189,6 +195,7 @@ class ApiClient {
     source_lang?: string;
     clone_voice?: boolean;
     skip_review?: boolean;
+    generate_subtitles?: boolean;
     ownership_confirmed?: boolean;
     voice_consent?: boolean;
     glossary?: Record<string, string>;

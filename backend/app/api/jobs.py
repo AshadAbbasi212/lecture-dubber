@@ -39,6 +39,7 @@ class JobCreateRequest(BaseModel):
     enable_lipsync: bool = False  # Reserved for Phase 8 milestone
     ownership_confirmed: bool = False
     voice_consent: bool = False
+    generate_subtitles: bool = True
 
 
 class JobResponse(BaseModel):
@@ -140,7 +141,8 @@ def create_job(req: JobCreateRequest, current_user: User = Depends(get_current_u
     options_dict = {
         "clone_voice": req.clone_voice,
         "skip_review": req.skip_review,
-        "enable_lipsync": req.enable_lipsync
+        "enable_lipsync": req.enable_lipsync,
+        "generate_subtitles": req.generate_subtitles
     }
 
     job = Job(

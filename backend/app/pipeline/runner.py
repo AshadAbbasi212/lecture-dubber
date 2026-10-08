@@ -151,7 +151,28 @@ class PipelineRunner:
                     if storage.exists(job.source_ref):
                         upload_file_key = job.source_ref
                     else:
-                        raise FileNotFoundError(f"Uploaded source not found for reference: {job.source_ref}")
+                        upload_dir = f"uploads/{job.source_ref}"
+                        chunks_dir = storage.get_path(upload_dir)
+                        chunk_files = sorted([f for f in chunks_dir.glob("chunk_*") if f.is_file()])
+                        if chunk_files:
+                            meta_key = f"{upload_dir}/meta.json"
+                            ext = ".mp4"
+                            if storage.exists(meta_key):
+                                try:
+                                    meta = json.loads(storage.get(meta_key).decode("utf-8"))
+                                    ext = meta.get("extension", ".mp4")
+                                except Exception:
+                                    pass
+                            raw_assembled_path = storage.get_path(f"{upload_dir}/assembled_raw{ext}")
+                            with open(raw_assembled_path, "wb") as outfile:
+                                for cf in chunk_files:
+                                    with open(cf, "rb") as infile:
+                                        outfile.write(infile.read())
+                            standardize_to_mp4(raw_assembled_path, storage.get_path(upload_file_key))
+                            if raw_assembled_path.exists() and raw_assembled_path != storage.get_path(upload_file_key):
+                                raw_assembled_path.unlink()
+                        else:
+                            raise FileNotFoundError(f"Uploaded source not found for reference: {job.source_ref}")
 
                 source_upload_path = storage.get_path(upload_file_key)
                 standardize_to_mp4(source_upload_path, target_path)

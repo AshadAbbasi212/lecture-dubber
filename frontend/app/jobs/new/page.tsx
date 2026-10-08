@@ -78,7 +78,7 @@ export default function NewJobPage() {
         setUploadProgress(0);
         const init = await api.initUpload(file.name, file.size, file.type || "video/mp4");
         const uploadId = init.upload_id;
-        const chunkSize = init.chunk_size;
+        const chunkSize = init.chunk_size || 5 * 1024 * 1024;
 
         let offset = 0;
         while (offset < file.size) {
@@ -86,7 +86,16 @@ export default function NewJobPage() {
           const res = await api.uploadChunk(uploadId, chunk, offset, (uploaded) => {
             setUploadProgress(Math.round((uploaded / file.size) * 100));
           });
-          offset = res.offset;
+          offset = (res && typeof res.offset === "number" && res.offset > offset)
+            ? res.offset
+            : offset + chunk.size;
+        }
+
+        // Complete upload assembly
+        try {
+          await api.completeUpload(uploadId);
+        } catch (compErr: any) {
+          console.warn("Upload complete notice:", compErr);
         }
 
         sourceRef = uploadId;
@@ -118,6 +127,7 @@ export default function NewJobPage() {
         source_lang: sourceLang === "auto" ? undefined : sourceLang,
         clone_voice: cloneVoice,
         skip_review: skipReview,
+        generate_subtitles: generateSubtitles,
         ownership_confirmed: ownershipConfirmed,
         voice_consent: voiceConsent,
       });

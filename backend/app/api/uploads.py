@@ -19,13 +19,15 @@ router = APIRouter(prefix="/uploads", tags=["uploads"])
 class UploadInitRequest(BaseModel):
     filename: str
     total_size: int  # in bytes
+    content_type: Optional[str] = "video/mp4"
 
 
 class UploadInitResponse(BaseModel):
     upload_id: str
     filename: str
     total_size: int
-    max_chunk_size: int = 10 * 1024 * 1024  # 10 MB chunks recommended
+    chunk_size: int = 10 * 1024 * 1024  # 10 MB chunks recommended
+    max_chunk_size: int = 10 * 1024 * 1024
 
 
 class UploadStatusResponse(BaseModel):
@@ -48,6 +50,7 @@ class UploadCompleteResponse(BaseModel):
 
 
 @router.post("", response_model=UploadInitResponse)
+@router.post("/init", response_model=UploadInitResponse)
 def start_upload(req: UploadInitRequest, current_user: User = Depends(get_current_user)):
     # 1. Validate file extension
     ext = Path(req.filename).suffix.lower()
@@ -141,7 +144,8 @@ async def upload_chunk(
     chunk_key = f"{upload_dir}/chunk_{offset:012d}"
     storage.put(chunk_key, body)
 
-    return {"uploaded": len(body), "offset": offset}
+    next_offset = offset + len(body)
+    return {"uploaded": len(body), "offset": next_offset, "upload_id": upload_id}
 
 
 @router.post("/{upload_id}/complete", response_model=UploadCompleteResponse)
