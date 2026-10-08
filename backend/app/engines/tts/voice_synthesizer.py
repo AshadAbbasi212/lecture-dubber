@@ -60,21 +60,33 @@ class FallbackTTSEngine(TTSEngine):
                     tts_text = normalize_phonetics_for_tts(text)
 
                     words = len(tts_text.strip().split())
-                    base_rate = 2.3 if is_sheikh else 2.6
+                    base_rate = 2.4 if is_sheikh else 2.6
                     est_dur = max(words / base_rate, 1.0)
                     if target_duration and target_duration > 0:
-                        desired_dur = target_duration * 0.90
-                        ratio = desired_dur / est_dur
-                        length_scale = round(min(1.35, max(0.85, ratio)), 2)
+                        # If text is longer than slot, speed up gracefully; never drag out below natural tempo
+                        if est_dur > target_duration:
+                            ratio = target_duration / est_dur
+                            length_scale = round(max(0.85, ratio), 2)
+                        else:
+                            length_scale = 1.00 if is_sheikh else 0.96
                     else:
-                        length_scale = 1.05
+                        length_scale = 1.00 if is_sheikh else 0.96
+
+                    # Emotional expressiveness & human prosody parameters
+                    # Higher noise-scale expands pitch variation and expressive inflection
+                    # Higher noise-w-scale introduces natural conversational rhythm
+                    noise_scale = "0.85" if is_sheikh else "0.82"
+                    noise_w = "0.92"
+                    sentence_silence = "0.18"
 
                     cmd = [
                         py_bin, "-m", "piper",
                         "-m", str(chosen_model),
                         "-f", str(out_file),
                         "--length-scale", str(length_scale),
-                        "--sentence-silence", "0.25"
+                        "--noise-scale", noise_scale,
+                        "--noise-w-scale", noise_w,
+                        "--sentence-silence", sentence_silence
                     ]
 
                     p = subprocess.Popen(
@@ -88,6 +100,23 @@ class FallbackTTSEngine(TTSEngine):
                     )
                     p.communicate(tts_text)
                     if p.returncode == 0 and out_file.exists() and out_file.stat().st_size > 100:
+                        # Studio Vocal Warmth & Acoustic Enhancement
+                        # Adds warm body resonance, articulate presence, and smooth dynamic control
+                        try:
+                            raw_tmp = out_file.with_name(out_file.stem + "_raw_prefilter.wav")
+                            shutil.move(out_file, raw_tmp)
+                            warmth_cmd = [
+                                settings.get_ffmpeg_cmd(), "-y",
+                                "-i", str(raw_tmp),
+                                "-af", "volume=0.90,highpass=f=75,equalizer=f=240:width_type=o:w=1.2:g=1.6,equalizer=f=3600:width_type=o:w=1.0:g=1.4,acompressor=threshold=-16dB:ratio=2.2:attack=15:release=140",
+                                str(out_file)
+                            ]
+                            subprocess.run(warmth_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+                            if raw_tmp.exists():
+                                raw_tmp.unlink()
+                        except Exception as ef:
+                            logger.debug(f"Vocal warmth filter bypassed: {ef}")
+
                         probe = probe_media_file(out_file)
                         return probe.duration
             except Exception as e:

@@ -27,7 +27,7 @@ SEGMENTS = [
         "end": 11.8,
         "speaker": "narrator",
         "src_text": "اُزبیکستان وسطی ایشیا کی ایک ایسی سرزمین، جہاں صدیوں پرانی تاریخ آج بھی مسجدوں، مدرسوں، خانقاہوں، بازاروں، مزارات اور قدیم راستوں میں سانس لیتی ہے۔",
-        "tgt_text": "Uzbekistan is a land of Central Asia where centuries-old history still breathes in mosques, madrasas, shrines, and ancient paths."
+        "tgt_text": "Uzbekistan is a breathtaking land of Central Asia—where centuries of living history still echo through majestic mosques, madrasas, and sacred shrines!"
     },
     {
         "idx": 2,
@@ -35,7 +35,7 @@ SEGMENTS = [
         "end": 23.5,
         "speaker": "narrator",
         "src_text": "جی ہاں، یہ ہے اُزبیکستان، وہ خطہ جو نہ صرف اپنی تہذیبی عظمت اور فن تعمیر کے لیے، بلکہ علم، تصوف اور روحانیت کی ایک گہری اور طویل روایت کے لیے بھی پہچانا جاتا ہے۔",
-        "tgt_text": "Yes, this is Uzbekistan, a region renowned not only for its cultural heritage and architecture, but also for its profound tradition of spirituality."
+        "tgt_text": "Yes, this is Uzbekistan, a region renowned not only for its architectural glory, but for its profound spiritual legacy."
     },
     {
         "idx": 3,
@@ -43,7 +43,7 @@ SEGMENTS = [
         "end": 44.9,
         "speaker": "narrator",
         "src_text": "جی ہاں، یہ اُزبیکستان کی وہ سرزمین ہے جہاں محدثین، فقہا، مشائخ اور صوفیائے کرام کی عظیم شخصیات نے علم و معرفت کے چراغ روشن کیے۔ بخارا اور سمرقند کی زمین آج بھی ان بزرگوں کے مزارات، خانقاہوں اور یادگاروں کو اپنے اندر سمیٹے ہوئے ہے۔ آخر شیخ الوظائف بار بار اُزبیکستان ہی کیوں جاتے ہیں؟",
-        "tgt_text": "This is Uzbekistan's sacred soil, where noble hadith scholars, jurists, and Sufis lit the lamps of knowledge. The land of Bukhara and Samarkand still preserves their sacred memorials. Why does Sheikh-ul-Wazaif visit Uzbekistan repeatedly?"
+        "tgt_text": "This is Uzbekistan's sacred soil, where noble hadith scholars and Sufis lit the eternal lamps of knowledge. The land of Bukhara and Samarkand still preserves their sacred memorials. Why does Sheikh-ul-Wazaif visit Uzbekistan repeatedly?"
     },
     {
         "idx": 4,
@@ -51,7 +51,7 @@ SEGMENTS = [
         "end": 73.0,
         "speaker": "sheikh_ul_wazaif",
         "src_text": "ہم اپنے بڑوں کا شکریہ ادا کرنے جا رہے ہیں۔ یہاں پڑی ہے ماوراء النہر، یہاں پڑی ہے جہاں سے اولیاء صالحین آئے، یہاں پڑی ہے جہاں سے بڑی بڑی ہستیاں آئیں، جہاں سے نیک دل بادشاہ آئے، جہاں سے سچے سوداگر آئے، اور یہی وہ راستہ ہے جہاں سے وہ لوگ آئے جنہوں نے ہمیں اس رب کی، اس کے حبیب کی پہچان کروائی۔",
-        "tgt_text": "We are going to express gratitude to our spiritual elders. Here lies Mawarannahr, where righteous saints, noble personalities, and honest merchants came. This is the path of those who guided us to the knowledge of God and His Beloved Prophet."
+        "tgt_text": "We are journeying to express heartfelt gratitude to our spiritual elders! Here lies Mawarannahr, where righteous saints, noble personalities, and honest merchants came. This is the sacred path of those who guided us to know our Lord and His Beloved Prophet!"
     },
     {
         "idx": 5,
@@ -59,7 +59,7 @@ SEGMENTS = [
         "end": 84.1,
         "speaker": "narrator",
         "src_text": "چار ستمبر دو ہزار چھبیس بروز جمعہ اسی سرزمین کی طرف شیخ الوظائف کے ساتھ تقریباً ایک سو اٹھائیس سے زائد مرد و خواتین پر مشتمل ایک قافلہ روانہ ہوا۔",
-        "tgt_text": "On Friday, September 4th, 2026, a caravan comprising over one hundred and twenty-eight men and women departed alongside Sheikh-ul-Wazaif toward this historic land."
+        "tgt_text": "On Friday, September 4th, 2026, a dedicated caravan of over one hundred and twenty-eight seekers set out alongside Sheikh-ul-Wazaif toward this historic land."
     },
     {
         "idx": 6,
@@ -67,7 +67,7 @@ SEGMENTS = [
         "end": 87.6,
         "speaker": "narrator",
         "src_text": "تاشقند سے بخارا اور بخارا سے سمرقند تک۔",
-        "tgt_text": "From Tashkent to Bukhara, and from Bukhara to Samarkand."
+        "tgt_text": "Their spiritual journey spanned from Tashkent to Bukhara, and onwards to historic Samarkand!"
     },
     {
         "idx": 7,
@@ -75,7 +75,7 @@ SEGMENTS = [
         "end": 93.2,
         "speaker": "narrator",
         "src_text": "مگر یہ سفر صرف تاریخی عمارتیں دیکھنے، قدیم شہروں کی سیر کرنے کا سفر نہیں تھا۔",
-        "tgt_text": "Yet this journey was not merely to observe historical architecture or explore ancient cities."
+        "tgt_text": "Yet this blessed journey was far more than merely sightseeing historical landmarks or exploring ancient cities."
     },
     {
         "idx": 8,
@@ -83,7 +83,7 @@ SEGMENTS = [
         "end": 102.4,
         "speaker": "narrator",
         "src_text": "یہ اولیائے کرام کے مزارات پر حاضری، محدثین کی یادگاروں سے فیضیاب، روحانیت کی تلاش اور روح کی ترقی کا سفر بھی تھا۔",
-        "tgt_text": "It was a sacred pilgrimage to visit shrines of saints, draw spiritual blessing from hadith scholars, and seek the advancement of the soul."
+        "tgt_text": "It was a sacred pilgrimage to visit shrines of saints, draw spiritual blessings from hadith scholars, and seek the true elevation of the soul!"
     },
     {
         "idx": 9,
@@ -91,7 +91,7 @@ SEGMENTS = [
         "end": 114.6,
         "speaker": "narrator",
         "src_text": "سفر کے مختلف مراحل میں شیخ الوظائف نے قافلے کو ایسے اعمال، وظائف، اذکار، مراقبات اور تعویذات بھی دیے جن سے زندگی میں عزت، شہرت، رزق اور دولت ملے۔",
-        "tgt_text": "Throughout the journey, Sheikh-ul-Wazaif bestowed upon the caravan sacred prayers, wazaif, litanies, and meditations that bring honour, livelihood, and blessings."
+        "tgt_text": "Throughout the journey, Sheikh-ul-Wazaif bestowed upon the caravan sacred prayers, wazaif, and meditations that bring honour, lawful livelihood, and divine blessings."
     },
     {
         "idx": 10,
@@ -99,7 +99,7 @@ SEGMENTS = [
         "end": 120.0,
         "speaker": "narrator",
         "src_text": "کامیابی، جادو، جنات اور نظر بد سے حفاظت، اور روحانیت میں عروج ہو۔",
-        "tgt_text": "Bringing success, divine protection from harm and negative energies, and spiritual elevation."
+        "tgt_text": "These sacred practices grant lasting success, divine protection from harm and negative forces, and profound spiritual elevation!"
     }
 ]
 
@@ -114,9 +114,13 @@ def main():
     audio_dir = work_dir / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
     tts_dir = work_dir / "tts"
+    if tts_dir.exists():
+        shutil.rmtree(tts_dir)
     tts_dir.mkdir(parents=True, exist_ok=True)
 
     input_video = ROOT_DIR / "uzbekistan_sample_2min.mp4"
+    if not input_video.is_file():
+        input_video = ROOT_DIR / "storage" / "archive" / "uzbekistan_sample_2min.mp4"
     if not input_video.is_file():
         print(f"Error: Input video not found at {input_video}")
         return
@@ -242,16 +246,29 @@ def main():
     print(f"  Mastered Audio Mix: {dub_mix_wav.name} (-16 LUFS, background ducked smoothly by -12 dB)")
 
     # Step 6: Video Muxing & MP3 Export
-    print(f"\n[Stage 6/6] Muxing Final Dubbed Video...")
+    print(f"\n[Stage 6/6] Muxing Final Dubbed Video with Soft Subtitles...")
     final_video_path = ROOT_DIR / "final_dubbed_uzbekistan_2min.mp4"
     final_mp3_path = ROOT_DIR / "dub_audio_uzbekistan_2min.mp3"
+    srt_path = ROOT_DIR / "final_dubbed_uzbekistan_2min.srt"
+
+    def format_srt_time(seconds: float) -> str:
+        hrs = int(seconds // 3600)
+        mins = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
+        millis = int(round((seconds - int(seconds)) * 1000))
+        return f"{hrs:02d}:{mins:02d}:{secs:02d},{millis:03d}"
+
+    with open(srt_path, "w", encoding="utf-8") as f_srt:
+        for i, s in enumerate(SEGMENTS, 1):
+            f_srt.write(f"{i}\n{format_srt_time(s['start'])} --> {format_srt_time(s['end'])}\n{s['tgt_text']}\n\n")
 
     mux_result = mux_video_and_audio(
         video_path=input_video,
         audio_path=dub_mix_wav,
         output_path=final_video_path,
         target_lang="en",
-        title="Lecture Dubber - Uzbekistan Journey (English Dubbed Highlight)"
+        title="Lecture Dubber - Uzbekistan Journey (English Dubbed Highlight)",
+        subtitle_path=srt_path
     )
 
     export_dub_mp3(dub_mix_wav, final_mp3_path)
