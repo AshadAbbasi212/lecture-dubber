@@ -62,7 +62,14 @@ def assemble_timeline_vocals(
                 np.interp(idx_orig, np.arange(orig_len), data[:, 1])
             ])
 
-        start_sample = int(round(seg.start * sample_rate))
+        # Natural temporal placement: if audio is shorter than the slot, add a slight
+        # lead-in pause (up to 0.35s) so speech is naturally placed within the original speaker's turn
+        target_dur = max(seg.end - seg.start, 0.1)
+        audio_dur = len(data) / sample_rate
+        lead_in = min(0.35, max(0.0, (target_dur - audio_dur) * 0.30))
+        effective_start = seg.start + lead_in
+
+        start_sample = int(round(effective_start * sample_rate))
         if start_sample >= num_samples:
             continue
 

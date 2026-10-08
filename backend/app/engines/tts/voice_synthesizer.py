@@ -22,28 +22,68 @@ class FallbackTTSEngine(TTSEngine):
         text: str,
         language: str,
         out_path: str,
-        reference_audio: Optional[str] = None
+        reference_audio: Optional[str] = None,
+        speaker: Optional[str] = None,
+        target_duration: Optional[float] = None
     ) -> float:
         out_file = Path(out_path).resolve()
         out_file.parent.mkdir(parents=True, exist_ok=True)
 
         if language == "en":
-            # Priority 1: High-fidelity local neural Piper TTS with natural South Asian / Eastern accent
+            # Priority 1: High-clarity neural Piper TTS with crystal-clear English enunciation
             try:
                 import sys
-                piper_model = Path(__file__).resolve().parent.parent.parent.parent.parent / "models" / "tts" / "piper" / "reza.onnx"
-                if not piper_model.is_file():
-                    piper_model = Path("models/tts/piper/reza.onnx").resolve()
+                piper_dir = Path(__file__).resolve().parent.parent.parent.parent.parent / "models" / "tts" / "piper"
+                if not piper_dir.is_dir():
+                    piper_dir = Path("models/tts/piper").resolve()
 
-                if piper_model.is_file():
+                spk_str = (speaker or "").lower()
+                is_sheikh = any(k in spk_str for k in ["sheikh", "speaker_1", "sheikh_ul_wazaif", "imam", "scholar"])
+
+                # Revert to previous high-clarity accent models:
+                # Kusal: Clear baritone scholar voice for Sheikh-ul-Wazaif
+                # Reza: Clear documentary narrator voice
+                if is_sheikh:
+                    chosen_model = piper_dir / "kusal.onnx"
+                else:
+                    chosen_model = piper_dir / "reza.onnx"
+
+                # Fallback if chosen model not present
+                if not chosen_model.is_file():
+                    chosen_model = piper_dir / "reza.onnx" if (piper_dir / "reza.onnx").is_file() else piper_dir / "kusal.onnx"
+
+                if chosen_model.is_file():
                     spikes_py = Path(__file__).resolve().parent.parent.parent.parent.parent / "spikes" / ".venv" / "Scripts" / "python.exe"
                     py_bin = str(spikes_py) if spikes_py.is_file() else sys.executable
+
+                    words = len(text.strip().split())
+                    # Base conversational pacing: Reza ~2.0 words/s, Kusal ~2.8 words/s
+                    base_rate = 2.8 if is_sheikh else 2.0
+                    est_dur = max(words / base_rate, 1.0)
+                    if target_duration and target_duration > 0:
+                        desired_dur = target_duration * 0.88
+                        ratio = desired_dur / est_dur
+                        max_ls = 1.75 if is_sheikh else 1.50
+                        length_scale = round(min(max_ls, max(0.90, ratio)), 2)
+                    else:
+                        length_scale = 1.15
+
+                    cmd = [
+                        py_bin, "-m", "piper",
+                        "-m", str(chosen_model),
+                        "-f", str(out_file),
+                        "--length-scale", str(length_scale),
+                        "--sentence-silence", "0.35"
+                    ]
+
                     p = subprocess.Popen(
-                        [py_bin, "-m", "piper", "-m", str(piper_model), "-f", str(out_file)],
+                        cmd,
                         stdin=subprocess.PIPE,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        text=True
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace"
                     )
                     p.communicate(text)
                     if p.returncode == 0 and out_file.exists() and out_file.stat().st_size > 100:
@@ -143,7 +183,9 @@ class VoiceSynthesizer:
         language: str,
         out_path: Path,
         reference_clip: Optional[Path] = None,
-        clone_voice: bool = True
+        clone_voice: bool = True,
+        speaker: Optional[str] = None,
+        target_duration: Optional[float] = None
     ) -> float:
         """
         Synthesizes speech for a single segment and applies voice cloning if requested.
@@ -152,12 +194,14 @@ class VoiceSynthesizer:
         raw_tts_path = out_path.with_suffix(".raw_tts.wav")
 
         try:
-            # Step 1: Base TTS synthesis
+            # Step 1: Base TTS synthesis with multi-speaker model routing & pacing
             dur = self.tts.synthesize(
                 text=text,
                 language=language,
                 out_path=str(raw_tts_path),
-                reference_audio=str(reference_clip) if reference_clip else None
+                reference_audio=str(reference_clip) if reference_clip else None,
+                speaker=speaker,
+                target_duration=target_duration
             )
 
             # Step 2: Voice timbre conversion (cloning)
@@ -175,4 +219,7 @@ class VoiceSynthesizer:
 
         finally:
             if raw_tts_path.exists():
-                raw_tts_path.unlink()
+                try:
+                    raw_tts_path.unlink()
+                except Exception:
+                    pass

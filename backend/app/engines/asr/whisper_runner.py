@@ -23,18 +23,23 @@ def run_transcription(audio_path: Path, model_size: str = "base", language: str 
 
     # Automatic device & compute type determination based on hardware capabilities
     if device == "auto":
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        if torch.cuda.is_available():
+            cap = torch.cuda.get_device_capability()
+            # Maxwell (compute capability 5.0) lacks INT8/FP16 tensor cores. CPU int8 is 4x faster on AVX2.
+            if cap[0] < 6 or compute_type == "int8":
+                device = "cpu"
+                compute_type = "int8"
+            else:
+                device = "cuda"
+                if compute_type == "auto":
+                    compute_type = "float16"
+        else:
+            device = "cpu"
+            if compute_type == "auto":
+                compute_type = "int8"
 
     if compute_type == "auto":
-        if device == "cuda":
-            # Check for Maxwell / sm_50 lack of native FP16/INT8
-            cap = torch.cuda.get_device_capability() if torch.cuda.is_available() else (0, 0)
-            if cap[0] < 6:  # Maxwell / older
-                compute_type = "float32"
-            else:
-                compute_type = "float16"
-        else:
-            compute_type = "int8"
+        compute_type = "int8" if device == "cpu" else "float32"
 
     # Initialize model
     model = WhisperModel(model_size, device=device, compute_type=compute_type)
@@ -99,9 +104,9 @@ def main():
     try:
         lang = args.language if args.language and args.language != "None" else None
         res = run_transcription(Path(args.audio), args.model, lang, args.device, args.compute_type, task=args.task)
-        print(json.dumps(res, ensure_ascii=False))
+        print(json.dumps(res, ensure_ascii=True))
     except Exception as e:
-        print(json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
+        print(json.dumps({"status": "error", "message": str(e)}, ensure_ascii=True))
         sys.exit(1)
 
 

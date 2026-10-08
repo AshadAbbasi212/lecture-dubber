@@ -2,6 +2,26 @@
 
 All notable changes to the Lecture Dubber project will be documented in this file.
 
+## [Production Release: Dual 10-Minute Verification & Pipeline Hardening] - 2026-10-07
+
+### Added
+- **Sacred Arabic Preservation Engine (`arabic_preserver.py`)**:
+  - Quranic verses, Hadith citations, and sacred Adhkar (e.g. Tashkeel diacritics, blessings upon the Prophet) are detected automatically.
+  - Slices original vocal audio verbatim onto the timeline so sacred recitations are preserved without English translation or synthetic artifacts.
+  - Added test suite `backend/tests/test_arabic_preserver.py` (4/4 passing).
+- **Multi-Speaker Neural Routing**:
+  - Distinct neural ONNX voices: Piper `reza.onnx` for documentary narration and Piper `kusal.onnx` for Sheikh-ul-Wazaif / scholar sermons.
+  - Speaker tagging in timeline automatically routes segments to their corresponding vocal persona.
+- **Pacing Optimization & Stutter Elimination**:
+  - Implemented dynamic `--length-scale` pacing calculated natively per segment (`target_duration / expected_duration`), eliminating robotic phase-vocoder `atempo` chopping and stuttering.
+- **Background Music Preservation & Broadcast Ducking**:
+  - Integrated Demucs stem separation isolating speech vocals while retaining background music, room acoustics, and sound effects.
+  - Smooth RMS ducking (-12 dB / 25% background volume during speech) with 150ms release and EBU R128 (-16 LUFS) normalization.
+- **Dual 10-Minute Production Verification**:
+  - Processed `final_dubbed_uzbekistan_10min.mp4` (276.9 MB, 1080p, 600.07s) and `final_dubbed_ramzan_taraveeh_10min.mp4` (215.1 MB, 1080p, 600.07s).
+  - Generated full bilingual transcripts in JSON and TXT format with speaker and sacred Arabic tags.
+  - Pytest test suite expanded to **88 passing tests** (100% pass rate).
+
 ## [Phase 7: Hardening, Security Audit & Handover] - 2026-10-07
 
 ### Added

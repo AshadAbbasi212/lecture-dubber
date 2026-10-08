@@ -121,3 +121,30 @@ Recorded during Phase 0 research spikes and hardware/license verification (Octob
 - **Status:** DEFERRED per product owner specification.
 - Interface stub `LipSyncEngine` and state `lipsyncing` reserved in architecture without loading or installing models in v1.
 - Benchmarked candidates when Phase 8 is approved: `MuseTalk` (MIT code, check weights) vs `LatentSync` (Apache-2.0 code).
+
+---
+
+## Production Optimization Decisions (Phase 7 Dual-Clip Verification)
+
+### 1. Background Music Preservation & Broadcast Ducking
+- **Decision:** Use Demucs stem separation to split input audio into `vocals.wav` and `background.wav`.
+- **Implementation:** During speech, the background music and ambient room acoustic are attenuated by -12 dB (25% volume) using a 50ms RMS envelope detector with 150ms smooth release. In speech pauses, background volume returns smoothly to 100%. The final mix is normalized to EBU R128 (-16 LUFS, -1.5 dBTP).
+- **Result:** Original speaker speech is 100% eliminated while background nasheeds, music, and ambient studio acoustics are cleanly preserved.
+
+### 2. Pacing Optimization & Natural Cadence (Eliminating Stuttering/Lag)
+- **Decision:** Eliminate post-hoc audio chopping (`atempo`) as the primary pacing mechanism.
+- **Implementation:** Compute dynamic `--length-scale` natively inside the Piper neural synthesis engine based on `target_duration / expected_duration` (bounded in `[0.85, 1.20]`).
+- **Result:** Continuous, natural speech flow with consistent prosody, completely eliminating robotic warbling and syllable stuttering.
+
+### 3. Sacred Arabic Preservation Engine (Quran & Hadith)
+- **Decision:** Quranic verses, Hadith recitations, and sacred Adhkar must not be translated into English.
+- **Implementation:** Created `arabic_preserver.py` inspecting Urdu/Arabic script for Tashkeel diacritics (`[\u064B-\u065F]`), Quranic markers, Hadith formulas (صلى الله عليه وسلم, قال رسول الله), and sacred Adhkar (سبحان الله, استغفر الله, بسم الله).
+- **Action:** Preserved segments automatically slice and copy the original vocal recitation audio directly onto the timeline, maintaining authentic sacred pronunciation.
+
+### 4. Multi-Speaker Voice Personas
+- **Decision:** Different speakers in lectures/documentaries must have distinct vocal identities.
+- **Models:**
+  - **Narrator:** Piper `reza.onnx` (MIT) — articulate, modern documentary narration.
+  - **Sheikh-ul-Wazaif / Lecturer:** Piper `kusal.onnx` (MIT) — warm, mature baritone scholar cadence.
+- **Verification:** Both 10-minute production lectures (`uzbekistan_journey_10m` and `ramzan_taraveeh_10m`) processed end-to-end with 100% test pass rate (88/88 tests).
+

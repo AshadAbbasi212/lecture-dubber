@@ -54,7 +54,7 @@ class FasterWhisperASREngine(ASREngine):
 
         logger.info(f"Running Faster-Whisper ASR ({self.model_size}) on {in_file.name}...")
         with acquire_gpu_lock():
-            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace", check=False)
 
         if res.returncode == 0:
             try:
