@@ -20,3 +20,5 @@ scratch/
 production_run_summary.json
 *transcript.json
 *transcript.txt
+*.srt
+*.vtt

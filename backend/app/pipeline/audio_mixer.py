@@ -88,7 +88,8 @@ def mix_vocals_and_background(
     background_path: Path,
     output_mix_path: Path,
     ducking_db: float = 12.0,
-    target_lufs: float = -16.0
+    target_lufs: float = -16.0,
+    room_ambience: bool = False
 ) -> Path:
     """
     Mixes dubbed vocals with background music/room tone.
@@ -149,10 +150,14 @@ def mix_vocals_and_background(
 
     try:
         # Step 2: Apply EBU R128 loudness normalization (-16 LUFS, True Peak -1.5 dBTP)
+        af_chain = f"loudnorm=I={target_lufs}:TP=-1.5:LRA=11"
+        if room_ambience:
+            af_chain = f"aecho=0.88:0.90:35:0.18,{af_chain}"
+
         loudnorm_cmd = [
             ffmpeg_cmd, "-y",
             "-i", str(raw_mix_path),
-            "-af", f"loudnorm=I={target_lufs}:TP=-1.5:LRA=11",
+            "-af", af_chain,
             "-c:a", "pcm_s16le",
             "-ar", "44100",
             str(output_mix_path)
@@ -162,7 +167,7 @@ def mix_vocals_and_background(
             # Fallback to raw mix if loudnorm fails
             shutil.copy(raw_mix_path, output_mix_path)
 
-        logger.info(f"Mixed and normalized dubbed audio to {output_mix_path.name} (EBU R128 {target_lufs} LUFS)")
+        logger.info(f"Mixed and normalized dubbed audio to {output_mix_path.name} (EBU R128 {target_lufs} LUFS, room_ambience={room_ambience})")
         return output_mix_path
 
     finally:

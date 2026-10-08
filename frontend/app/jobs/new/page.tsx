@@ -28,6 +28,7 @@ export default function NewJobPage() {
   const [sourceLang, setSourceLang] = useState("en");
   const [cloneVoice, setCloneVoice] = useState(true);
   const [skipReview, setSkipReview] = useState(false);
+  const [generateSubtitles, setGenerateSubtitles] = useState(true);
   const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
   const [voiceConsent, setVoiceConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -299,6 +300,26 @@ export default function NewJobPage() {
                 </div>
                 <div className="text-xs text-slate-400 mt-0.5">
                   Extracts a 15-second speech reference from separated vocals and transfers speaker timbre into the dubbed audio.
+                </div>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700 transition-colors">
+              <input
+                type="checkbox"
+                checked={generateSubtitles}
+                onChange={(e) => setGenerateSubtitles(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-950"
+              />
+              <div>
+                <div className="text-sm font-medium text-white flex items-center gap-1.5">
+                  Generate Closed Captions & Subtitles
+                  <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400">
+                    CC Subtitles
+                  </span>
+                </div>
+                <div className="text-xs text-slate-400 mt-0.5">
+                  Generates time-aligned .SRT / .VTT subtitles and embeds soft closed captions toggleable on/off in the player.
                 </div>
               </div>
             </label>

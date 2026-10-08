@@ -18,11 +18,13 @@ def mux_video_and_audio(
     output_path: Path,
     target_lang: str = "ur",
     tolerance_seconds: float = 2.0,
-    title: Optional[str] = None
+    title: Optional[str] = None,
+    subtitle_path: Optional[Path] = None
 ) -> MediaProbeResult:
     """
     Replaces the original video's audio with the dubbed audio mix (dub_mix.wav).
     Copies the video stream without re-encoding where possible.
+    Optionally embeds soft subtitles (SRT) into the MP4 container for closed caption toggle.
     Verifies A/V duration match and sync tolerance.
     Writes final.mp4 with AI-dubbed metadata tags.
     """
@@ -54,18 +56,39 @@ def mux_video_and_audio(
     )
 
     doc_title = title or f"Lecture Dubber - Dubbed ({target_lang})"
+    has_sub = subtitle_path is not None and Path(subtitle_path).is_file()
 
     # Step 2: Try direct stream copy for video stream (-c:v copy)
     cmd_copy = [
         ffmpeg_cmd, "-y",
         "-i", str(video_path),
         "-i", str(audio_path),
+    ]
+    if has_sub:
+        cmd_copy.extend(["-i", str(subtitle_path)])
+
+    cmd_copy.extend([
         "-c:v", "copy",
         "-c:a", "aac",
         "-b:a", "192k",
         "-ar", "44100",
-        "-map", "0:v:0",
-        "-map", "1:a:0",
+    ])
+    if has_sub:
+        cmd_copy.extend([
+            "-c:s", "mov_text",
+            "-map", "0:v:0",
+            "-map", "1:a:0",
+            "-map", "2:0",
+            "-metadata:s:s:0", f"language={target_lang}",
+            "-metadata:s:s:0", "title=Closed Captions (CC)"
+        ])
+    else:
+        cmd_copy.extend([
+            "-map", "0:v:0",
+            "-map", "1:a:0",
+        ])
+
+    cmd_copy.extend([
         "-shortest",
         "-movflags", "+faststart",
         "-metadata", f"title={doc_title}",
@@ -74,7 +97,7 @@ def mux_video_and_audio(
         "-metadata:s:a:0", f"language={target_lang}",
         "-metadata:s:a:0", f"title=Dubbed Speech ({target_lang})",
         str(output_path)
-    ]
+    ])
 
     res = subprocess.run(cmd_copy, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
 
@@ -85,6 +108,11 @@ def mux_video_and_audio(
             ffmpeg_cmd, "-y",
             "-i", str(video_path),
             "-i", str(audio_path),
+        ]
+        if has_sub:
+            cmd_transcode.extend(["-i", str(subtitle_path)])
+
+        cmd_transcode.extend([
             "-c:v", "libx264",
             "-preset", "fast",
             "-crf", "22",
@@ -92,8 +120,23 @@ def mux_video_and_audio(
             "-c:a", "aac",
             "-b:a", "192k",
             "-ar", "44100",
-            "-map", "0:v:0",
-            "-map", "1:a:0",
+        ])
+        if has_sub:
+            cmd_transcode.extend([
+                "-c:s", "mov_text",
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+                "-map", "2:0",
+                "-metadata:s:s:0", f"language={target_lang}",
+                "-metadata:s:s:0", "title=Closed Captions (CC)"
+            ])
+        else:
+            cmd_transcode.extend([
+                "-map", "0:v:0",
+                "-map", "1:a:0",
+            ])
+
+        cmd_transcode.extend([
             "-shortest",
             "-movflags", "+faststart",
             "-metadata", f"title={doc_title}",
@@ -102,7 +145,7 @@ def mux_video_and_audio(
             "-metadata:s:a:0", f"language={target_lang}",
             "-metadata:s:a:0", f"title=Dubbed Speech ({target_lang})",
             str(output_path)
-        ]
+        ])
         res_transcode = subprocess.run(cmd_transcode, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
         if res_transcode.returncode != 0 or not output_path.exists() or output_path.stat().st_size == 0:
             raise MediaValidationError(f"Failed to mux final video: {res_transcode.stderr}")

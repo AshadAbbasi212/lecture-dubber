@@ -56,7 +56,10 @@ class FallbackTTSEngine(TTSEngine):
                     spikes_py = Path(__file__).resolve().parent.parent.parent.parent.parent / "spikes" / ".venv" / "Scripts" / "python.exe"
                     py_bin = str(spikes_py) if spikes_py.is_file() else sys.executable
 
-                    words = len(text.strip().split())
+                    from backend.app.engines.tts.arabic_phonetics import normalize_phonetics_for_tts
+                    tts_text = normalize_phonetics_for_tts(text)
+
+                    words = len(tts_text.strip().split())
                     base_rate = 2.3 if is_sheikh else 2.6
                     est_dur = max(words / base_rate, 1.0)
                     if target_duration and target_duration > 0:
@@ -83,7 +86,7 @@ class FallbackTTSEngine(TTSEngine):
                         encoding="utf-8",
                         errors="replace"
                     )
-                    p.communicate(text)
+                    p.communicate(tts_text)
                     if p.returncode == 0 and out_file.exists() and out_file.stat().st_size > 100:
                         probe = probe_media_file(out_file)
                         return probe.duration
@@ -95,8 +98,9 @@ class FallbackTTSEngine(TTSEngine):
                 import sys
                 import base64
                 if sys.platform == "win32":
-                    encoded_text = base64.b64encode(text.encode("utf-8")).decode("ascii")
-                    words = len(text.strip().split())
+                    sapi_text = tts_text if 'tts_text' in locals() else text
+                    encoded_text = base64.b64encode(sapi_text.encode("utf-8")).decode("ascii")
+                    words = len(sapi_text.strip().split())
                     base_rate = 2.5
                     est_dur = max(words / base_rate, 0.8)
                     rate_val = int(round(((est_dur / target_duration) - 1.0) * 4.0)) if target_duration and target_duration > 0 else 0

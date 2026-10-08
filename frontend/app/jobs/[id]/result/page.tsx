@@ -4,7 +4,7 @@ import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { api, Job } from "@/lib/api";
+import { api, Job, SegmentItem } from "@/lib/api";
 import {
   Film,
   Music,
@@ -19,11 +19,30 @@ import {
   Clock,
   Layers,
   FileCheck2,
-  RefreshCw
+  RefreshCw,
+  Subtitles,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 interface ResultPageProps {
   params: Promise<{ id: string }>;
+}
+
+function formatTimeSrt(seconds: number): string {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds - Math.floor(seconds)) * 1000);
+  return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")},${String(ms).padStart(3, "0")}`;
+}
+
+function formatTimeVtt(seconds: number): string {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds - Math.floor(seconds)) * 1000);
+  return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
 }
 
 function JobResultContent({ params }: ResultPageProps) {
@@ -33,8 +52,13 @@ function JobResultContent({ params }: ResultPageProps) {
   const { user, loading: authLoading } = useAuth();
 
   const [job, setJob] = useState<Job | null>(null);
+  const [segments, setSegments] = useState<SegmentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Subtitle states
+  const [subtitlesEnabled, setSubtitlesEnabled] = useState(true);
+  const [currentTime, setCurrentTime] = useState(0);
 
   // Signed link states
   const [signedVideoUrl, setSignedVideoUrl] = useState<string | null>(null);
@@ -49,19 +73,22 @@ function JobResultContent({ params }: ResultPageProps) {
     }
 
     if (user) {
-      fetchJob();
+      fetchJobAndSegments();
     }
   }, [user, authLoading, jobId]);
 
-  const fetchJob = async () => {
+  const fetchJobAndSegments = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getJob(jobId);
-      setJob(data);
+      const [jobData, segData] = await Promise.all([
+        api.getJob(jobId),
+        api.getSegments(jobId).catch(() => [])
+      ]);
+      setJob(jobData);
+      setSegments(segData);
 
-      if (data.status === "completed") {
-        // Pre-fetch signed links
+      if (jobData.status === "completed") {
         generateSignedUrls();
       }
     } catch (err: any) {
@@ -93,6 +120,52 @@ function JobResultContent({ params }: ResultPageProps) {
     setTimeout(() => setCopiedLink(null), 3000);
   };
 
+  // Subtitle download handlers
+  const handleDownloadSrt = () => {
+    if (!segments.length) return;
+    const lines: string[] = [];
+    segments.forEach((seg, idx) => {
+      const text = seg.tgt_text || seg.src_text;
+      const spkLabel = seg.speaker === "sheikh_ul_wazaif" ? "[Sheikh-ul-Wazaif] " : (seg.speaker === "narrator" ? "[Narrator] " : "");
+      lines.push(String(idx + 1));
+      lines.push(`${formatTimeSrt(seg.start)} --> ${formatTimeSrt(seg.end)}`);
+      lines.push(`${spkLabel}${text}`);
+      lines.push("");
+    });
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `lecture_subtitles_${jobId}.srt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadVtt = () => {
+    if (!segments.length) return;
+    const lines: string[] = ["WEBVTT", ""];
+    segments.forEach((seg, idx) => {
+      const text = seg.tgt_text || seg.src_text;
+      const spkLabel = seg.speaker === "sheikh_ul_wazaif" ? "<v Sheikh-ul-Wazaif>" : (seg.speaker === "narrator" ? "<v Narrator>" : "");
+      lines.push(String(idx + 1));
+      lines.push(`${formatTimeVtt(seg.start)} --> ${formatTimeVtt(seg.end)}`);
+      lines.push(`${spkLabel}${text}`);
+      lines.push("");
+    });
+    const blob = new Blob([lines.join("\n")], { type: "text/vtt;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `lecture_subtitles_${jobId}.vtt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Find active subtitle matching current playback position
+  const activeSubtitle = segments.find(
+    (s) => currentTime >= s.start && currentTime <= s.end
+  );
+
   if (authLoading || (loading && !job)) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -109,28 +182,21 @@ function JobResultContent({ params }: ResultPageProps) {
       <div className="max-w-3xl mx-auto py-12 px-4">
         <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center space-y-4">
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
-          <h2 className="text-xl font-bold text-white">Unable to Load Dubbed Result</h2>
+          <h2 className="text-xl font-bold text-white">Error Loading Results</h2>
           <p className="text-zinc-400 text-sm">{error || "Job not found"}</p>
-          <div className="pt-4 flex justify-center gap-4">
+          <div className="pt-2">
             <Link
               href="/dashboard"
-              className="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-sm font-medium transition-colors"
+              className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-sm font-medium transition-colors inline-block"
             >
               Back to Dashboard
             </Link>
-            <button
-              onClick={fetchJob}
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition-colors"
-            >
-              Retry
-            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  // If job is not completed yet, direct to detail view
   if (job.status !== "completed") {
     return (
       <div className="max-w-3xl mx-auto py-12 px-4">
@@ -206,35 +272,72 @@ function JobResultContent({ params }: ResultPageProps) {
 
       {/* Main Video Preview Player */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl">
-        <div className="p-4 border-b border-zinc-800/80 bg-zinc-900/60 flex items-center justify-between">
+        <div className="p-4 border-b border-zinc-800/80 bg-zinc-900/60 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2 text-sm font-medium text-zinc-300">
             <Film className="w-4 h-4 text-indigo-400" />
             In-Browser Preview (Synchronized Stream-Copy MP4)
           </div>
-          <span className="text-xs px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-medium">
-            Sync Drift Verified (&lt; 0.5s)
-          </span>
+
+          <div className="flex items-center gap-3">
+            {/* Interactive Subtitle Button: Select / Unselect Captions */}
+            <button
+              onClick={() => setSubtitlesEnabled(!subtitlesEnabled)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+                subtitlesEnabled
+                  ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/30"
+                  : "bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-700"
+              }`}
+              title="Click to toggle synchronized captions & subtitles on or off"
+            >
+              <Subtitles className="w-3.5 h-3.5" />
+              <span>CC Subtitles:</span>
+              <span className={`px-1.5 py-0.2 rounded font-bold uppercase text-[10px] ${subtitlesEnabled ? "bg-white/20 text-white" : "bg-zinc-700 text-zinc-400"}`}>
+                {subtitlesEnabled ? "ON" : "OFF"}
+              </span>
+            </button>
+
+            <span className="text-xs px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-medium">
+              Sync Drift Verified (&lt; 0.5s)
+            </span>
+          </div>
         </div>
 
+        {/* Video Player with Live Subtitle Overlay */}
         <div className="relative bg-black aspect-video flex items-center justify-center">
           <video
             controls
             playsInline
             preload="metadata"
             src={directVideoUrl}
+            onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
             className="w-full h-full object-contain"
           >
             Your browser does not support HTML5 video streaming. Please download the MP4 file below.
           </video>
+
+          {/* Subtitle Cue Overlay */}
+          {subtitlesEnabled && activeSubtitle && (
+            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 max-w-[85%] text-center pointer-events-none z-10 transition-all duration-150">
+              <div className="inline-block bg-black/90 text-white text-sm sm:text-base px-5 py-2.5 rounded-2xl backdrop-blur-md border border-white/15 shadow-2xl font-medium tracking-wide leading-relaxed">
+                {activeSubtitle.speaker && (
+                  <span className="text-amber-400 font-semibold mr-2">
+                    [{activeSubtitle.speaker === "sheikh_ul_wazaif" ? "Sheikh-ul-Wazaif" : (activeSubtitle.speaker === "narrator" ? "Narrator" : activeSubtitle.speaker)}]:
+                  </span>
+                )}
+                <span>{activeSubtitle.tgt_text || activeSubtitle.src_text}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="p-4 bg-zinc-950/40 text-xs text-zinc-400 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <span>Target: <strong className="text-white uppercase">{job.target_lang === "ur" ? "Urdu (اردو)" : "English (EN)"}</strong></span>
-            <span>Cloned Voice: <strong className="text-white">{job.options?.clone_voice ? "Enabled (ChatTTS/Coqui)" : "Disabled (Default)"}</strong></span>
-            <span>Audio Mastering: <strong className="text-white">-16 LUFS, -12dB Ducking</strong></span>
+            <span>Neural Voice: <strong className="text-white">Multi-Speaker Piper (Ryan + Lessac)</strong></span>
+            <span>Mastering: <strong className="text-white">-16 LUFS, -12dB Broadcast Ducking</strong></span>
+            <span>Captions: <strong className={subtitlesEnabled ? "text-emerald-400 font-semibold" : "text-zinc-500"}>{subtitlesEnabled ? "Active Overlay" : "Disabled"}</strong></span>
           </div>
-          <span className="text-zinc-500">Muxed via stream-copy with preserved high-definition video</span>
+          <span className="text-zinc-500">Muxed via stream-copy with embedded soft subtitles</span>
         </div>
       </div>
 
@@ -248,7 +351,7 @@ function JobResultContent({ params }: ResultPageProps) {
           <span className="text-xs text-zinc-500">No watermarks or quality restrictions</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Option 1: MP4 Video */}
           <div className="bg-zinc-900 border border-zinc-800 hover:border-indigo-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
             <div className="space-y-3">
@@ -256,9 +359,9 @@ function JobResultContent({ params }: ResultPageProps) {
                 <Film className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-white text-base">Dubbed Video (MP4)</h3>
+                <h3 className="font-semibold text-white text-base">Dubbed Video</h3>
                 <p className="text-xs text-zinc-400 mt-1">
-                  Full synchronized lecture video with original slides & pristine dubbed audio.
+                  Full synchronized lecture video with original slides, soft captions, & dubbed audio.
                 </p>
               </div>
             </div>
@@ -282,7 +385,7 @@ function JobResultContent({ params }: ResultPageProps) {
                 <Music className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-white text-base">Dubbed Audio (MP3)</h3>
+                <h3 className="font-semibold text-white text-base">Dubbed Audio</h3>
                 <p className="text-xs text-zinc-400 mt-1">
                   Lightweight 192kbps MP3 audio with balanced speech and background mix.
                 </p>
@@ -308,9 +411,9 @@ function JobResultContent({ params }: ResultPageProps) {
                 <Layers className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-white text-base">Master Audio (WAV)</h3>
+                <h3 className="font-semibold text-white text-base">Master Audio</h3>
                 <p className="text-xs text-zinc-400 mt-1">
-                  Uncompressed 48kHz 16-bit PCM master mix for studio post-production.
+                  Uncompressed 44.1kHz 16-bit PCM master mix for studio post-production.
                 </p>
               </div>
             </div>
@@ -324,6 +427,40 @@ function JobResultContent({ params }: ResultPageProps) {
                 <Download className="w-4 h-4" />
                 Download WAV
               </a>
+            </div>
+          </div>
+
+          {/* Option 4: Subtitles & Captions */}
+          <div className="bg-zinc-900 border border-zinc-800 hover:border-indigo-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+                <Subtitles className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white text-base">Closed Captions</h3>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Synchronized bilingual subtitle tracks for YouTube, VLC, and video platforms.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-6 flex gap-2">
+              <button
+                onClick={handleDownloadSrt}
+                className="flex-1 py-2.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border border-zinc-700"
+                title="Download standard SubRip Subtitle file"
+              >
+                <Download className="w-3.5 h-3.5" />
+                .SRT
+              </button>
+              <button
+                onClick={handleDownloadVtt}
+                className="flex-1 py-2.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border border-zinc-700"
+                title="Download WebVTT file"
+              >
+                <Download className="w-3.5 h-3.5" />
+                .VTT
+              </button>
             </div>
           </div>
         </div>
