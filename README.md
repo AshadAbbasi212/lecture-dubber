@@ -14,31 +14,19 @@
 **Free, Open-Source, and 100% Local AI Video Dubbing & Video Translation Platform for Education and Creators.**  
 Translate educational lectures and videos into 12 languages with authentic neural voices, background music preservation, and sample-accurate A/V sync — running completely offline on standard workstation hardware. Zero subscription fees, zero cloud API limits, and zero data leakage.
 
-[Video Comparison](#-side-by-side-dubbing-comparison) • [Features](#key-features) • [Comparison](#-how-lecture-dubber-compares) • [Architecture](#system-architecture) • [Quick Start](#quick-start) • [Supported Languages](#-supported-languages--neural-voices) • [License](#licensing--commercial-freedom)
+[Live Demo](#-live-demonstration) • [Features](#key-features) • [Comparison](#-how-lecture-dubber-compares) • [Architecture](#system-architecture) • [Quick Start](#quick-start) • [Supported Languages](#-supported-languages--neural-voices) • [License](#licensing--commercial-freedom)
 
 <br>
 
 <div align="center">
 
-### 🎬 Side-by-Side Dubbing Comparison
-
-*Experience the quality: Compare the original English lecture with the locally synthesized Urdu dubbed lecture.*
-
-| 🇺🇸 Original English Lecture | 🇵🇰 AI-Dubbed Urdu Lecture |
-| :---: | :---: |
-| <video src="docs/assets/original_lecture_english.mp4" controls width="360" style="max-width: 100%; border-radius: 8px;"></video> | <video src="docs/assets/dubbed_lecture_urdu.mp4" controls width="360" style="max-width: 100%; border-radius: 8px;"></video> |
-| **Speaker:** Richard Feynman (English) | **Dubbed Voice:** Tariq Scholar (Urdu) |
-| **Duration:** 1 min 2 sec (62.55s) | **Duration:** 1 min 2 sec (Exact 62.55s match) |
-| **Audio Track:** Original classroom microphone | **Audio Track:** Local Piper neural voice + room acoustics (-12 dB ducked) |
-| [**▶️ Play / Download Original English (3.3 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/original_lecture_english.mp4) | [**▶️ Play / Download Dubbed Urdu (3.3 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_urdu.mp4) |
-
-<br>
+### 🎬 Live Demonstration
 
 <a href="https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_urdu.mp4">
-  <img src="docs/assets/demo.gif" alt="Lecture Dubber Pipeline Demonstration" width="680" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+  <img src="docs/assets/demo.gif" alt="Lecture Dubber Pipeline Demonstration" width="700" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
 </a>
 <br>
-<em><b>Pipeline Demonstration</b>: 62-second lecture automatically transcribed, length-budgeted, translated into Urdu, synthesized with Tariq neural voice, and muxed with zero A/V drift on 4 GB VRAM hardware.</em>
+<em><b>1-Minute Dubbed Lecture Demo</b>: Richard Feynman's iconic science lecture automatically transcribed, length-budgeted, translated into Urdu, synthesized with Tariq neural voice, and muxed with zero A/V drift on a 4 GB VRAM GPU.</em>
 
 <br><br>
 
