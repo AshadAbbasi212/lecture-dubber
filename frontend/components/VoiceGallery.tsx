@@ -421,12 +421,16 @@ export const VOICES_ROSTER: VoiceItem[] = [
 ];
 
 interface VoiceGalleryProps {
-  selectedVoice: string;
-  onSelectVoice: (voiceId: string) => void;
+  selectedVoice?: string;
+  onSelectVoice?: (voiceId: string) => void;
   targetLang?: string;
 }
 
-export default function VoiceGallery({ selectedVoice, onSelectVoice, targetLang }: VoiceGalleryProps) {
+export default function VoiceGallery({ 
+  selectedVoice = "ryan", 
+  onSelectVoice = () => {}, 
+  targetLang 
+}: VoiceGalleryProps) {
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [playbackTime, setPlaybackTime] = useState<number>(0);
   const [activeLangFilter, setActiveLangFilter] = useState<string>(targetLang || "all");

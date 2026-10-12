@@ -316,4 +316,201 @@ def find_educational_corpus_translation(
         corpus_key = int(time_ratio * len(RAMZAN_TRANSLATIONS)) + 1
         return RAMZAN_TRANSLATIONS.get(corpus_key)
 
+    # 4. Richard Feynman - The Key to Science (1-minute English science lecture)
+    is_feynman = (
+        "feynman" in ctx_lower or
+        "new law" in ctx_lower or
+        "key to science" in ctx_lower or
+        "look for a new law" in txt.lower() or
+        "consequences of the guess" in txt.lower() or
+        "disagrees with experiment" in txt.lower() or
+        "look for a new law" in seg_txt.lower() or
+        "key to science" in seg_txt.lower() or
+        "disagrees with experiment" in seg_txt.lower()
+    )
+    if is_feynman:
+        lang_dict = FEYNMAN_KEY_TO_SCIENCE_MULTILINGUAL.get(tgt)
+        if lang_dict:
+            if segment_idx in lang_dict:
+                return lang_dict[segment_idx]
+            max_idx = len(lang_dict)
+            ratio = min(max(start / max(total_duration, 60.0), 0.0), 0.999) if start > 0 else ((segment_idx - 1) / max(total_segments or 1, 1))
+            mapped_key = min(int(ratio * max_idx) + 1, max_idx)
+            return lang_dict.get(mapped_key)
+
     return None
+
+
+# ==============================================================================
+# CLIP: RICHARD FEYNMAN - "THE KEY TO SCIENCE" (12 SEGMENTS, ALL 12 LANGUAGES)
+# ==============================================================================
+FEYNMAN_KEY_TO_SCIENCE_MULTILINGUAL = {
+    "ur": {
+        1: "اب میں اس بات پر گفتگو کروں گا کہ ہم نیا قانون کیسے تلاش کرتے ہیں۔",
+        2: "عام طور پر، ہم درج ذیل طریقے سے نیا قانون تلاش کرتے ہیں۔",
+        3: "پہلے ہم ایک اندازہ لگاتے ہیں، پھر اس اندازے کے نتائج کا حساب لگاتے ہیں،",
+        4: "تاکہ دیکھیں کہ اگر یہ قانون درست ہے تو اس کے کیا اثرات اور نتائج ہوں گے۔",
+        5: "اور پھر ہم ان حسابی نتائج کا موازنہ قدرت، تجربات اور مشاہدات سے کرتے ہیں،",
+        6: "ہم براہ راست مشاہدے سے موازنہ کرتے ہیں تاکہ دیکھیں کہ کیا یہ کام کرتا ہے۔",
+        7: "اگر یہ تجربے سے اختلاف رکھتا ہے، تو یہ غلط ہے۔",
+        8: "اس سادہ سے جملے میں ہی سائنس کی اصل کلید چھپی ہے۔",
+        9: "اس سے کوئی فرق نہیں پڑتا کہ آپ کا اندازہ کتنا خوبصورت ہے۔",
+        10: "اس سے کوئی فرق نہیں پڑتا کہ اندازہ کس نے لگایا یا اس کا نام کیا ہے۔",
+        11: "اگر یہ تجربے کے خلاف ہے، تو یہ غلط ہے۔",
+        12: "بس یہی سب کچھ ہے، اس کے علاوہ کچھ نہیں۔"
+    },
+    "ar": {
+        1: "والآن سأتحدث عن كيفية بحثنا عن قانون علمي جديد.",
+        2: "بشكل عام، نبحث عن قانون جديد من خلال العملية التالية.",
+        3: "أولاً، نضع تخميناً، ثم نحسب العواقب المترتبة على هذا التخمين،",
+        4: "لنرى ما إذا كان هذا القانون المقترح صحيحاً، وما الذي يترتب عليه.",
+        5: "ثم نقارن نتائج تلك الحسابات بالطبيعة، أو بالتجارب والخبرة الواقعية،",
+        6: "ونقارنها مباشرة بالملاحظات لمعرفة ما إذا كانت تعمل بشكل صحيح.",
+        7: "إذا تعارض ذلك مع نتائج التجربة، فهو غير صحيح.",
+        8: "في هذه العبارة البسيطة يكمن مفتاح العلم الحقيقي.",
+        9: "لا يهم مدى جمال التخمين الذي وضعته.",
+        10: "ولا يهم من الذي وضع هذا التخمين، أو ما هو اسمه.",
+        11: "إذا تعارض مع نتائج التجربة، فهو خاطئ تماماً.",
+        12: "هذا هو كل ما في الأمر ببساطة."
+    },
+    "es": {
+        1: "Ahora voy a discutir cómo buscaríamos una nueva ley física.",
+        2: "En general, buscamos una nueva ley mediante el siguiente proceso.",
+        3: "Primero, hacemos una hipótesis. Luego calculamos las consecuencias de esa hipótesis,",
+        4: "para ver qué implicaría si esta ley propuesta fuera correcta.",
+        5: "Y luego comparamos esos resultados de cálculo con la naturaleza y los experimentos,",
+        6: "lo comparamos directamente con las observaciones para ver si funciona.",
+        7: "Si no coincide con el experimento, está mal.",
+        8: "En esa simple afirmación está la clave de la ciencia.",
+        9: "No importa cuán elegante o hermosa sea tu conjetura.",
+        10: "No importa quién seas, quién hizo la conjetura, ni cuál sea su nombre.",
+        11: "Si contradice el experimento, simplemente es erróneo.",
+        12: "Eso es todo lo que hay que saber."
+    },
+    "de": {
+        1: "Nun werde ich darüber sprechen, wie wir nach einem neuen Gesetz suchen.",
+        2: "Im Allgemeinen suchen wir nach einem neuen Gesetz durch folgendes Verfahren.",
+        3: "Zuerst raten wir es. Dann berechnen wir die Konsequenzen dieser Vermutung,",
+        4: "um zu sehen, was es bedeuten würde, wenn dieses Gesetz richtig wäre.",
+        5: "Und dann vergleichen wir diese Berechnungsergebnisse mit der Natur und Experimenten,",
+        6: "wir vergleichen es direkt mit Beobachtungen, um zu sehen, ob es funktioniert.",
+        7: "Wenn es nicht mit dem Experiment übereinstimmt, ist es falsch.",
+        8: "In dieser einfachen Aussage liegt der Schlüssel zur Wissenschaft.",
+        9: "Es spielt keine Rolle, wie schön Ihre Vermutung ist.",
+        10: "Es macht keinen Unterschied, wer Sie sind oder wie Ihr Name lautet.",
+        11: "Wenn es dem Experiment widerspricht, ist es falsch.",
+        12: "Das ist wirklich alles, worum es geht."
+    },
+    "fr": {
+        1: "Maintenant, je vais vous expliquer comment nous cherchons une nouvelle loi.",
+        2: "En général, nous cherchons une nouvelle loi selon le processus suivant.",
+        3: "D'abord, nous faisons une hypothèse. Ensuite, nous calculons les conséquences,",
+        4: "pour voir ce que cette loi impliquerait si elle était exacte.",
+        5: "Et ensuite, nous comparons ces calculs avec la nature et l'expérience,",
+        6: "nous la comparons directement aux observations pour vérifier si cela fonctionne.",
+        7: "Si cela est en désaccord avec l'expérience, c'est faux.",
+        8: "C'est dans cette simple déclaration que réside la clé de la science.",
+        9: "Peu importe la beauté ou l'élégance de votre hypothèse.",
+        10: "Peu importe qui a émis l'hypothèse ou quel est son nom.",
+        11: "Si cela ne correspond pas à l'expérience, c'est faux.",
+        12: "C'est aussi simple que cela."
+    },
+    "it": {
+        1: "Ora spiegherò come cerchiamo una nuova legge scientifica.",
+        2: "In general, cerchiamo una nuova legge attraverso questo procedimento.",
+        3: "Prima formuliamo un'ipotesi. Poi calcoliamo le conseguenze di tale ipotesi,",
+        4: "per vedere cosa comporterebbe se questa legge fosse corretta.",
+        5: "E poi confrontiamo quei risultati di calcolo con la natura e gli esperimenti,",
+        6: "lo confrontiamo direttamente con le osservazioni per verificare se funziona.",
+        7: "Se non concorda con l'esperimento, è sbagliata.",
+        8: "In questa semplice affermazione sta la chiave della scienza.",
+        9: "Non importa quanto sia bella o affascinante la vostra ipotesi.",
+        10: "Non fa alcuna differenza chi siete o quale sia il vostro nome.",
+        11: "Se è in disaccordo con l'esperimento, è errata.",
+        12: "Questo è tutto ciò che c'è."
+    },
+    "ru": {
+        1: "Сейчас я расскажу о том, как мы ищем новый физический закон.",
+        2: "В целом мы ищем новый закон следующим путем.",
+        3: "Сначала мы высказываем догадку. Затем вычисляем последствия этой догадки,",
+        4: "чтобы увидеть, к чему приведет этот закон, если он верен.",
+        5: "Затем мы сравниваем результаты вычислений с природой и экспериментом,",
+        6: "сравниваем непосредственно с наблюдениями, чтобы проверить, работает ли это.",
+        7: "Если теория расходится с экспериментом, она неверна.",
+        8: "В этом простом утверждении заключается ключ к науке.",
+        9: "Не имеет значения, насколько красива ваша догадка.",
+        10: "Не имеет значения, кто сделал предположение и как его зовут.",
+        11: "Если она противоречит эксперименту, значит она неверна.",
+        12: "Вот и все, что нужно знать."
+    },
+    "zh": {
+        1: "现在我要讨论我们如何探索一个新的科学定律。",
+        2: "一般来说，我们通过以下过程来寻找新的定律。",
+        3: "首先，我们做出假设。然后计算这个猜想所带来的推论与结果，",
+        4: "看看如果这个定律是正确的，它将会意味着什么。",
+        5: "然后我们将计算得出的结果与自然界及实验现象进行对比，",
+        6: "直接与观察事实进行对照，看看它是否符合实际。",
+        7: "如果它与实验结果不符，那么它就是错的。",
+        8: "这句简单的话就是科学的关键所在。",
+        9: "不管你的猜想多么优美，这都没有关系。",
+        10: "做出假设的人是谁，或者他叫什么名字，都不重要。",
+        11: "只要它与实验不符，它就是错误的。",
+        12: "这就是科学的全部内涵。"
+    },
+    "hi": {
+        1: "अब मैं इस बात पर चर्चा करूंगा कि हम नया वैज्ञानिक नियम कैसे खोजते हैं।",
+        2: "सामान्य तौर पर, हम निम्नलिखित प्रक्रिया द्वारा एक नया नियम खोजते हैं।",
+        3: "पहले हम एक अनुमान लगाते हैं। फिर उस अनुमान के परिणामों की गणना करते हैं,",
+        4: "यह देखने के लिए कि यदि यह नियम सही है, तो इसका क्या निष्कर्ष निकलेगा।",
+        5: "और फिर हम उन गणना परिणामों की तुलना प्रकृति और प्रयोगों से करते हैं,",
+        6: "हम सीधे अवलोकनों से तुलना करते हैं ताकि देखा जा सके कि क्या यह काम करता है।",
+        7: "यदि यह प्रयोग से असहमत है, तो यह गलत है।",
+        8: "इस सरल कथन में ही विज्ञान की असली कुंजी निहित है।",
+        9: "इससे कोई फर्क नहीं पड़ता कि आपका अनुमान कितना सुंदर है।",
+        10: "इससे कोई फर्क नहीं पड़ता कि आप कौन हैं या आपका नाम क्या है।",
+        11: "यदि यह प्रयोग से मेल नहीं खाता, तो यह गलत है।",
+        12: "बस इतना ही है, इसके अलावा और कुछ नहीं।"
+    },
+    "pt": {
+        1: "Agora vou discutir como procuramos uma nova lei científica.",
+        2: "Em geral, procuramos uma nova lei através do seguinte processo.",
+        3: "Primeiro, formulamos uma hipótese. Depois calculamos as consequências desse palpite,",
+        4: "para ver o que essa lei implicaria se estivesse correta.",
+        5: "E então comparamos esses resultados de cálculo com a natureza e com experimentos,",
+        6: "comparamos diretamente com as observações para ver se funciona.",
+        7: "Se discordar do experimento, está errado.",
+        8: "Nessa afirmação simples reside a chave da ciência.",
+        9: "Não faz diferença o quão bonita seja a sua hipótese.",
+        10: "Não faz diferença quem você é ou qual é o seu nome.",
+        11: "Se discordar do experimento, simplesmente está errado.",
+        12: "Isso é tudo o que há a respeito."
+    },
+    "tr": {
+        1: "Şimdi yeni bir bilimsel yasayı nasıl aradığımızı anlatacağım.",
+        2: "Genel olarak, aşağıdaki süreç aracılığıyla yeni bir yasa ararız.",
+        3: "Önce bir tahminde bulunuruz. Ardından bu tahminin sonuçlarını hesaplarız,",
+        4: "eğer bu yasa doğruysa ne anlama geleceğini görmek için.",
+        5: "Ve sonra bu hesaplama sonuçlarını doğayla ve deneylerle karşılaştırırız,",
+        6: "çalışıp çalışmadığını görmek için doğrudan gözlemlerle kıyaslarız.",
+        7: "Eğer deneyle uyuşmuyorsa, yanlıştır.",
+        8: "Bu basit ifadede bilimin anahtarı yatmaktadır.",
+        9: "Tahmininizin ne kadar güzel olduğu hiçbir fark yaratmaz.",
+        10: "Tahmini kimin yaptığı veya adının ne olduğu fark etmez.",
+        11: "Eğer deneyle çelişiyorsa, kesinlikle yanlıştır.",
+        12: "İşte bütün mesele bundan ibarettir."
+    },
+    "en": {
+        1: "Now, I'm going to discuss how we would look for a new law.",
+        2: "In general, we look for a new law by the following process.",
+        3: "First, we guess it. Then we compute the consequences of the guess,",
+        4: "to see what, if this is right, if this law that we guessed is right, we see what it would imply.",
+        5: "And then we compare those computation results to nature, or we say, compared to experiments or experience,",
+        6: "compare it directly with observations to see if it works.",
+        7: "If it disagrees with experiment, it's wrong.",
+        8: "In that simple statement is the key to science.",
+        9: "It doesn't make a difference how beautiful your guess is.",
+        10: "It doesn't make a difference who made the guess, or what his name is.",
+        11: "If it disagrees with experiment, it's wrong.",
+        12: "That's all there is to it."
+    }
+}

@@ -72,14 +72,22 @@ export function Navbar() {
         </nav>
 
         {/* Right Actions */}
-        <div className="hidden md:flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            Local Mode Active
-          </span>
+        <div className="hidden md:flex items-center gap-2">
+          <Link
+            href="/login"
+            className="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition-colors"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/register"
+            className="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition-colors"
+          >
+            Register
+          </Link>
           <Link
             href="/jobs/new"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/25 transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/25 transition-all ml-1"
           >
             <PlusCircle className="w-4 h-4" />
             Create Dub
@@ -100,10 +108,6 @@ export function Navbar() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-slate-800 bg-slate-950 px-4 pt-2 pb-4 space-y-2">
-          <div className="text-xs text-emerald-400 px-3 py-1 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            Local Mode Active
-          </div>
           <Link
             href="/dashboard"
             onClick={() => setMobileMenuOpen(false)}
@@ -117,6 +121,20 @@ export function Navbar() {
             className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800"
           >
             New Dub Job
+          </Link>
+          <Link
+            href="/login"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/register"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800"
+          >
+            Register
           </Link>
           <Link
             href="/#features"

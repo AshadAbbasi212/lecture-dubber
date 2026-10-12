@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   FileCheck2
 } from "lucide-react";
+import VoiceGallery from "@/components/VoiceGallery";
 
 export default function HomePage() {
   return (
@@ -146,6 +147,27 @@ export default function HomePage() {
                 Preserves original 1080p/4K video frames without generational compression artifacts, muxing with EBU R128 (-16 LUFS) mastered audio in seconds.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Voice Showcase Gallery Section */}
+      <section id="voices" className="py-20 border-t border-slate-900 bg-slate-950/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-4">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Studio-Grade Neural TTS</span>
+            </div>
+            <h2 className="text-3xl font-bold text-white tracking-tight">
+              Audition 22 Authentic Neural Voices
+            </h2>
+            <p className="mt-3 text-slate-400 text-sm sm:text-base">
+              Listen to native audio samples across 12 educational languages with human cadence, warmth, and pitch realism.
+            </p>
+          </div>
+          <div className="bg-slate-900/40 p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl">
+            <VoiceGallery />
           </div>
         </div>
       </section>

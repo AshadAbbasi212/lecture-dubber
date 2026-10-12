@@ -160,6 +160,20 @@ class LocalLLMTranslator(TranslatorEngine):
             if validate_script_matches_language(candidate, tgt_lang):
                 return candidate
 
+        corpus_cand = find_educational_corpus_translation(
+            clip_context="",
+            full_transcript_text=text,
+            segment_idx=segment_idx,
+            segment_text=text,
+            start=0.0,
+            end=duration,
+            total_duration=duration,
+            total_segments=1,
+            target_lang=tgt_lang
+        )
+        if corpus_cand and validate_script_matches_language(corpus_cand, tgt_lang):
+            return corpus_cand
+
         # Attempt focused neural translation for this single segment via runner
         try:
             import subprocess

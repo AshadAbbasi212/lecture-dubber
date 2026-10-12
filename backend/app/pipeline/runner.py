@@ -36,6 +36,18 @@ from backend.app.pipeline.video_muxer import mux_video_and_audio, export_dub_mp3
 from backend.app.pipeline.time_estimator import estimate_remaining_seconds
 from backend.app.storage.local import storage
 
+def safe_unlink(path: Path):
+    """Safely unlinks a file with retries on Windows in case of temporary file locks."""
+    if not path.exists():
+        return
+    for _ in range(5):
+        try:
+            path.unlink()
+            return
+        except Exception:
+            import time
+            time.sleep(0.3)
+
 
 class PipelineRunner:
     """Executes stages for a job, updating DB state, artifacts, and SSE events."""
@@ -170,7 +182,7 @@ class PipelineRunner:
                                         outfile.write(infile.read())
                             standardize_to_mp4(raw_assembled_path, storage.get_path(upload_file_key))
                             if raw_assembled_path.exists() and raw_assembled_path != storage.get_path(upload_file_key):
-                                raw_assembled_path.unlink()
+                                safe_unlink(raw_assembled_path)
                         else:
                             raise FileNotFoundError(f"Uploaded source not found for reference: {job.source_ref}")
 
@@ -184,8 +196,7 @@ class PipelineRunner:
                     download_safe_url(resolved_url, temp_download_path)
                     standardize_to_mp4(temp_download_path, target_path)
                 finally:
-                    if temp_download_path.exists():
-                        temp_download_path.unlink()
+                    safe_unlink(temp_download_path)
 
             elif job.source_type == "youtube":
                 if not settings.ENABLE_YOUTUBE_IMPORT:
@@ -203,8 +214,7 @@ class PipelineRunner:
                     download_youtube_video(job.source_ref, temp_yt_path)
                     standardize_to_mp4(temp_yt_path, target_path)
                 finally:
-                    if temp_yt_path.exists():
-                        temp_yt_path.unlink()
+                    safe_unlink(temp_yt_path)
             else:
                 raise ValueError(f"Unsupported source_type '{job.source_type}'")
 

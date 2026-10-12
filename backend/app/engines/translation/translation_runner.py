@@ -57,13 +57,16 @@ def sanitize_target_text(text: str, tgt_code: str) -> str:
         # Strip Chinese, Cyrillic, Arabic, Devanagari characters
         text = re.sub(r"[\u4E00-\u9FFF\u0400-\u04FF\u0600-\u06FF\u0900-\u097F]", "", text).strip()
 
-    # Filter out Latin letters if target is Arabic
-    if tgt_code == "ar":
-        # Keep Arabic letters, digits, punctuation, strip Latin leakages
-        # Only strip if the text already contains Arabic letters
-        has_ar = any('\u0600' <= c <= '\u06FF' for c in text)
+    # Filter out Latin, Chinese, Cyrillic, Devanagari letters if target is Arabic or Urdu
+    if tgt_code in ["ar", "ur"]:
+        has_ar = any('\u0600' <= c <= '\u06FF' or '\u0750' <= c <= '\u077F' or '\u08A0' <= c <= '\u08FF' for c in text)
         if has_ar:
-            text = re.sub(r"[a-zA-Z]", "", text).strip()
+            # Strip Latin letters and CJK/Cyrillic/Devanagari characters
+            text = re.sub(r"[a-zA-Z\u4E00-\u9FFF\u0400-\u04FF\u0900-\u097F]", "", text).strip()
+
+    # Collapse consecutive degenerate word or token repetitions (3+ occurrences)
+    text = re.sub(r'(\b\S+\b)(?:\s+\1){2,}', r'\1', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\S+)(?:\s+\1){2,}', r'\1', text)
 
     return text.strip()
 
@@ -119,6 +122,8 @@ def translate_single_segment_prompt(
             **inp,
             max_new_tokens=96,
             do_sample=False,
+            repetition_penalty=1.15,
+            no_repeat_ngram_size=3,
             pad_token_id=tok.eos_token_id
         )
     raw = tok.decode(out[0][len(inp.input_ids[0]):], skip_special_tokens=True).strip()
@@ -179,7 +184,14 @@ def translate_batch(
             chat1 = tok.apply_chat_template(msgs1, tokenize=False, add_generation_prompt=True)
             inp1 = tok([chat1], return_tensors="pt").to(device)
             with torch.no_grad():
-                out1 = model.generate(**inp1, max_new_tokens=500, do_sample=False, pad_token_id=tok.eos_token_id)
+                out1 = model.generate(
+                    **inp1,
+                    max_new_tokens=500,
+                    do_sample=False,
+                    repetition_penalty=1.15,
+                    no_repeat_ngram_size=3,
+                    pad_token_id=tok.eos_token_id
+                )
             eng_output = tok.decode(out1[0][len(inp1.input_ids[0]):], skip_special_tokens=True).strip()
 
             # Step B: English -> Target
@@ -195,7 +207,14 @@ def translate_batch(
             chat2 = tok.apply_chat_template(msgs2, tokenize=False, add_generation_prompt=True)
             inp2 = tok([chat2], return_tensors="pt").to(device)
             with torch.no_grad():
-                out2 = model.generate(**inp2, max_new_tokens=500, do_sample=False, pad_token_id=tok.eos_token_id)
+                out2 = model.generate(
+                    **inp2,
+                    max_new_tokens=500,
+                    do_sample=False,
+                    repetition_penalty=1.15,
+                    no_repeat_ngram_size=3,
+                    pad_token_id=tok.eos_token_id
+                )
             tgt_output = tok.decode(out2[0][len(inp2.input_ids[0]):], skip_special_tokens=True).strip()
 
             parsed = parse_numbered_output(tgt_output, tgt_code)
@@ -214,7 +233,14 @@ def translate_batch(
             chat = tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
             inp = tok([chat], return_tensors="pt").to(device)
             with torch.no_grad():
-                out = model.generate(**inp, max_new_tokens=500, do_sample=False, pad_token_id=tok.eos_token_id)
+                out = model.generate(
+                    **inp,
+                    max_new_tokens=500,
+                    do_sample=False,
+                    repetition_penalty=1.15,
+                    no_repeat_ngram_size=3,
+                    pad_token_id=tok.eos_token_id
+                )
             tgt_output = tok.decode(out[0][len(inp.input_ids[0]):], skip_special_tokens=True).strip()
 
             parsed = parse_numbered_output(tgt_output, tgt_code)
