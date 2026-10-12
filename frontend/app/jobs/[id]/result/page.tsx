@@ -119,6 +119,8 @@ function JobResultContent({ params }: ResultPageProps) {
 
   // Signed link states
   const [signedVideoUrl, setSignedVideoUrl] = useState<string | null>(null);
+  const [signedSubtitledVideoUrl, setSignedSubtitledVideoUrl] = useState<string | null>(null);
+  const [signedBundleUrl, setSignedBundleUrl] = useState<string | null>(null);
   const [signedAudioUrl, setSignedAudioUrl] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
@@ -152,11 +154,15 @@ function JobResultContent({ params }: ResultPageProps) {
   const generateSignedUrls = async () => {
     setGeneratingLink(true);
     try {
-      const [videoRes, audioRes] = await Promise.all([
+      const [videoRes, subtitledRes, bundleRes, audioRes] = await Promise.all([
         api.getSignedDownloadUrl(jobId, "video"),
+        api.getSignedDownloadUrl(jobId, "video_subtitled").catch(() => null),
+        api.getSignedDownloadUrl(jobId, "video_bundle").catch(() => null),
         api.getSignedDownloadUrl(jobId, "audio", "mp3")
       ]);
       setSignedVideoUrl(videoRes.download_url);
+      if (subtitledRes) setSignedSubtitledVideoUrl(subtitledRes.download_url);
+      if (bundleRes) setSignedBundleUrl(bundleRes.download_url);
       setSignedAudioUrl(audioRes.download_url);
     } catch (err) {
       console.error("Failed to generate signed download link:", err);
@@ -242,6 +248,16 @@ function JobResultContent({ params }: ResultPageProps) {
     URL.revokeObjectURL(url);
   };
 
+  const handleDownloadVideoWithSrt = async () => {
+    setDownloadingType("video_with_srt");
+    try {
+      await handleDownload(directVideoUrl, `lecture_dub_${jobId}.mp4`, "video_with_srt");
+      handleDownloadSrt();
+    } finally {
+      setDownloadingType(null);
+    }
+  };
+
   // Find active subtitle matching current playback position
   const activeSubtitle = segments.find(
     (s) => currentTime >= s.start && currentTime <= s.end
@@ -308,10 +324,13 @@ function JobResultContent({ params }: ResultPageProps) {
   }
 
   const directVideoUrl = signedVideoUrl || api.getDownloadUrl(job.id, "video");
+  const directSubtitledVideoUrl = signedSubtitledVideoUrl || api.getDownloadUrl(job.id, "video_subtitled");
+  const directBundleUrl = signedBundleUrl || api.getDownloadUrl(job.id, "video_bundle");
   const streamVideoUrl = `${directVideoUrl}${directVideoUrl.includes("?") ? "&" : "?"}inline=true`;
   const directMp3Url = signedAudioUrl || api.getDownloadUrl(job.id, "audio", "mp3");
   const directWavUrl = api.getDownloadUrl(job.id, "audio", "wav");
   const directZipUrl = api.getDownloadUrl(job.id, "subtitles_zip");
+  const directVttUrl = api.getDownloadUrl(job.id, "subtitles_vtt", "mp3", true);
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-8">
@@ -395,6 +414,13 @@ function JobResultContent({ params }: ResultPageProps) {
             onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
             className="w-full h-full object-contain"
           >
+            <track
+              kind="subtitles"
+              src={directVttUrl}
+              srcLang={job.target_lang?.toLowerCase() || "ur"}
+              label="Subtitles (CC)"
+              default
+            />
             Your browser does not support HTML5 video streaming. Please download the MP4 file below.
           </video>
 
@@ -438,106 +464,119 @@ function JobResultContent({ params }: ResultPageProps) {
           <span className="text-xs text-zinc-500">No watermarks or quality restrictions</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Option 1: MP4 Video */}
-          <div className="bg-zinc-900 border border-zinc-800 hover:border-indigo-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Option 1: Subtitled Video (Burned-in Subtitles) */}
+          <div className="bg-gradient-to-b from-indigo-950/30 to-zinc-900 border-2 border-indigo-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group relative shadow-lg shadow-indigo-950/20">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
+                  <Subtitles className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full">
+                  Recommended
+                </span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-white text-base">Subtitled Video (Burned-In)</h3>
+                <p className="text-xs text-zinc-300 mt-1">
+                  Translated subtitles permanently rendered on video. Plays on every phone, browser, TV, and media player with zero setup.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-6">
+              <button
+                onClick={() => handleDownload(directSubtitledVideoUrl, `lecture_dub_subtitled_${jobId}.mp4`, "video_subtitled")}
+                disabled={downloadingType === "video_subtitled"}
+                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-75 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 cursor-pointer"
+              >
+                {downloadingType === "video_subtitled" ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Downloading Subtitled MP4...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Download Subtitled MP4
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Option 2: Clean Video (+ Auto-include .SRT) */}
+          <div className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-5 flex flex-col justify-between transition-all group">
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
                 <Film className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-white text-base">Dubbed Video</h3>
+                <h3 className="font-semibold text-white text-base">Dubbed Video + Subtitles</h3>
                 <p className="text-xs text-zinc-400 mt-1">
-                  Full synchronized lecture video with original slides, soft captions, & dubbed audio.
+                  Original lossless stream-copy MP4. Download video and synchronized .SRT subtitle file together.
                 </p>
               </div>
             </div>
 
-            <div className="pt-6">
+            <div className="pt-6 space-y-2">
               <button
-                onClick={() => handleDownload(directVideoUrl, `lecture_dub_${job.id}.mp4`, "video")}
+                onClick={handleDownloadVideoWithSrt}
+                disabled={downloadingType === "video_with_srt"}
+                className="w-full py-2 px-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                title="Downloads both the MP4 video and the .SRT subtitle file in one click"
+              >
+                {downloadingType === "video_with_srt" ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    Downloading Video + .SRT...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5" />
+                    Download Video + .SRT File
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => handleDownload(directVideoUrl, `lecture_dub_${jobId}.mp4`, "video")}
                 disabled={downloadingType === "video"}
-                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-75 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
+                className="w-full py-1.5 px-3 text-zinc-400 hover:text-white rounded-lg text-xs font-medium transition-colors text-center cursor-pointer"
               >
-                {downloadingType === "video" ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Downloading MP4...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    Download MP4
-                  </>
-                )}
+                Download Clean MP4 Only
               </button>
             </div>
           </div>
 
-          {/* Option 2: MP3 Audio */}
-          <div className="bg-zinc-900 border border-zinc-800 hover:border-indigo-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 group-hover:scale-105 transition-transform">
-                <Music className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-white text-base">Dubbed Audio</h3>
-                <p className="text-xs text-zinc-400 mt-1">
-                  Lightweight 192kbps MP3 audio with balanced speech and background mix.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-6">
-              <button
-                onClick={() => handleDownload(directMp3Url, `lecture_dub_${job.id}.mp3`, "mp3")}
-                disabled={downloadingType === "mp3"}
-                className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-75 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer"
-              >
-                {downloadingType === "mp3" ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Downloading MP3...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    Download MP3
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Option 3: WAV Master */}
-          <div className="bg-zinc-900 border border-zinc-800 hover:border-indigo-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
+          {/* Option 3: Complete Package (.ZIP) */}
+          <div className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-5 flex flex-col justify-between transition-all group">
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
                 <Layers className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-white text-base">Master Audio</h3>
+                <h3 className="font-semibold text-white text-base">Complete Package (.ZIP)</h3>
                 <p className="text-xs text-zinc-400 mt-1">
-                  Uncompressed 44.1kHz 16-bit PCM master mix for studio post-production.
+                  All-in-one bundle containing Dubbed MP4, Subtitled MP4, .SRT Subtitles, .VTT Captions, & MP3 Audio.
                 </p>
               </div>
             </div>
 
             <div className="pt-6">
               <button
-                onClick={() => handleDownload(directWavUrl, `lecture_dub_${job.id}.wav`, "wav")}
-                disabled={downloadingType === "wav"}
-                className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-75 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer"
+                onClick={() => handleDownload(directBundleUrl, `lecture_complete_bundle_${jobId}.zip`, "video_bundle")}
+                disabled={downloadingType === "video_bundle"}
+                className="w-full py-2.5 px-4 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-950/20"
               >
-                {downloadingType === "wav" ? (
+                {downloadingType === "video_bundle" ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    Downloading WAV...
+                    Packaging Complete ZIP...
                   </>
                 ) : (
                   <>
                     <Download className="w-4 h-4" />
-                    Download WAV
+                    Download All-in-One (.ZIP)
                   </>
                 )}
               </button>
@@ -545,15 +584,15 @@ function JobResultContent({ params }: ResultPageProps) {
           </div>
 
           {/* Option 4: Subtitles & Captions */}
-          <div className="bg-zinc-900 border border-zinc-800 hover:border-indigo-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
+          <div className="bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
                 <Subtitles className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-white text-base">Closed Captions</h3>
+                <h3 className="font-semibold text-white text-base">Subtitles & Captions Only</h3>
                 <p className="text-xs text-zinc-400 mt-1">
-                  Synchronized bilingual subtitle tracks for YouTube, VLC, and video platforms.
+                  Standalone bilingual subtitle tracks for YouTube, Canvas, Blackboard, or media players.
                 </p>
               </div>
             </div>
@@ -573,7 +612,7 @@ function JobResultContent({ params }: ResultPageProps) {
                 ) : (
                   <>
                     <Download className="w-3.5 h-3.5" />
-                    Download Pack (.ZIP)
+                    Download Subtitles Pack (.ZIP)
                   </>
                 )}
               </button>
@@ -596,6 +635,76 @@ function JobResultContent({ params }: ResultPageProps) {
                   .VTT
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Option 5: MP3 Audio */}
+          <div className="bg-zinc-900 border border-zinc-800 hover:border-violet-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 group-hover:scale-105 transition-transform">
+                <Music className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white text-base">Dubbed MP3 Audio</h3>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Lightweight 192kbps MP3 audio with balanced speech and background mix.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-6">
+              <button
+                onClick={() => handleDownload(directMp3Url, `lecture_dub_${jobId}.mp3`, "mp3")}
+                disabled={downloadingType === "mp3"}
+                className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-75 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer"
+              >
+                {downloadingType === "mp3" ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Downloading MP3...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Download MP3
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Option 6: WAV Master */}
+          <div className="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-5 flex flex-col justify-between transition-all group">
+            <div className="space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+                <Music className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white text-base">Studio WAV Master</h3>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Uncompressed 44.1kHz 16-bit PCM master mix for studio post-production.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-6">
+              <button
+                onClick={() => handleDownload(directWavUrl, `lecture_dub_${jobId}.wav`, "wav")}
+                disabled={downloadingType === "wav"}
+                className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-75 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer"
+              >
+                {downloadingType === "wav" ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Downloading WAV...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Download WAV
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

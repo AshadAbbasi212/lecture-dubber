@@ -32,7 +32,7 @@ from backend.app.pipeline.reference_clip import build_reference_clip
 from backend.app.pipeline.timing_fit import calculate_timing_fit, apply_audio_time_stretch
 from backend.app.engines.tts.voice_synthesizer import VoiceSynthesizer
 from backend.app.pipeline.audio_mixer import assemble_timeline_vocals, mix_vocals_and_background
-from backend.app.pipeline.video_muxer import mux_video_and_audio, export_dub_mp3, AVSyncDriftError
+from backend.app.pipeline.video_muxer import mux_video_and_audio, export_dub_mp3, burn_subtitles_to_video, AVSyncDriftError
 from backend.app.pipeline.time_estimator import estimate_remaining_seconds
 from backend.app.storage.local import storage
 
@@ -635,6 +635,41 @@ class PipelineRunner:
                 logger.warning(f"Could not export MP3 for job {job.id}: {e}; continuing with final video")
 
             self._record_artifact(job, "final_video", final_key, stage)
+
+            # If subtitles exist, also produce burned-in subtitled video and complete bundle
+            if srt_path and srt_path.is_file():
+                try:
+                    subtitled_key = f"{job_dir}/output/final_subtitled.mp4"
+                    out_subtitled_path = storage.get_path(subtitled_key)
+                    burn_subtitles_to_video(
+                        video_path=out_video_path,
+                        srt_path=srt_path,
+                        output_path=out_subtitled_path
+                    )
+                    self._record_artifact(job, "final_video_subtitled", subtitled_key, stage)
+                except Exception as e_sub_burn:
+                    logger.warning(f"Could not generate burned-in subtitled video for job {job.id}: {e_sub_burn}")
+
+                try:
+                    import zipfile
+                    bundle_key = f"{job_dir}/output/video_bundle.zip"
+                    bundle_path = storage.get_path(bundle_key)
+                    bundle_path.parent.mkdir(parents=True, exist_ok=True)
+                    with zipfile.ZipFile(bundle_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                        zf.write(out_video_path, f"lecture_dub_{job.id}.mp4")
+                        if srt_path.is_file():
+                            zf.write(srt_path, f"lecture_subtitles_{job.id}.srt")
+                        vtt_file = storage.get_path(f"{job_dir}/output/subtitles.vtt")
+                        if vtt_file.is_file():
+                            zf.write(vtt_file, f"lecture_subtitles_{job.id}.vtt")
+                        if out_mp3_path.is_file():
+                            zf.write(out_mp3_path, f"lecture_dub_{job.id}.mp3")
+                        subtitled_mp4 = storage.get_path(f"{job_dir}/output/final_subtitled.mp4")
+                        if subtitled_mp4.is_file():
+                            zf.write(subtitled_mp4, f"lecture_dub_subtitled_{job.id}.mp4")
+                    self._record_artifact(job, "video_bundle", bundle_key, stage)
+                except Exception as e_bundle:
+                    logger.warning(f"Could not generate video bundle zip for job {job.id}: {e_bundle}")
 
     def _record_artifact(self, job: Job, kind: str, path: str, stage: PipelineStage) -> None:
         artifact = Artifact(

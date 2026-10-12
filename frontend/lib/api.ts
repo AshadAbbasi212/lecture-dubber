@@ -238,7 +238,7 @@ class ApiClient {
   // Downloads
   async getSignedDownloadUrl(
     jobId: string,
-    kind: "video" | "audio" | "subtitles_zip" | "subtitles_srt" | "subtitles_vtt" = "video",
+    kind: "video" | "video_subtitled" | "video_bundle" | "audio" | "subtitles_zip" | "subtitles_srt" | "subtitles_vtt" = "video",
     format: "mp3" | "wav" = "mp3"
   ): Promise<{ download_url: string; expires_in: number }> {
     const res = await this.request<{ download_url: string; expires_in: number }>(`/jobs/${jobId}/download-url?kind=${kind}&format=${format}`);
@@ -252,7 +252,7 @@ class ApiClient {
 
   getDownloadUrl(
     jobId: string,
-    kind: "video" | "audio" | "subtitles_zip" | "subtitles_srt" | "subtitles_vtt" = "video",
+    kind: "video" | "video_subtitled" | "video_bundle" | "audio" | "subtitles_zip" | "subtitles_srt" | "subtitles_vtt" = "video",
     format: "mp3" | "wav" = "mp3",
     inline: boolean = false
   ): string {
