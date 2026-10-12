@@ -325,7 +325,7 @@ async def stream_job_events(job_id: str, current_user: User = Depends(get_curren
 @router.get("/{job_id}/download")
 def download_artifact(
     job_id: str,
-    kind: str = Query("video", pattern="^(video|video_subtitled|video_bundle|audio|audio_mp3|audio_wav|subtitles_zip|subtitles_srt|subtitles_vtt)$"),
+    kind: str = Query("video", pattern="^(video|audio|audio_mp3|audio_wav|subtitles_zip|subtitles_srt|subtitles_vtt)$"),
     format: str = Query("mp3", pattern="^(mp3|wav)$"),
     inline: bool = Query(False),
     token: Optional[str] = None,
@@ -334,7 +334,7 @@ def download_artifact(
     db: Session = Depends(get_db)
 ):
     """
-    Downloads the output file (MP4 video, Subtitled MP4, All-in-one Video Bundle ZIP, MP3 audio, WAV audio, or Subtitle pack).
+    Downloads the output file (MP4 video, MP3 audio, mixed WAV audio, or Subtitle bundle zip).
     Supports either authenticated user session, auth_token query param, OR a signed short-lived token.
     """
     if not current_user and auth_token:
@@ -347,9 +347,7 @@ def download_artifact(
         if not payload or payload.get("job_id") != job_id:
             raise HTTPException(status_code=403, detail="Invalid or expired download token")
         allowed_kinds = [kind]
-        if kind in ["video", "video_subtitled", "video_bundle"]:
-            allowed_kinds.extend(["video", "video_subtitled", "video_bundle"])
-        elif kind in ["audio", "audio_mp3", "audio_wav"]:
+        if kind in ["audio", "audio_mp3", "audio_wav"]:
             allowed_kinds.extend(["audio", "audio_mp3", "audio_wav"])
         elif kind in ["subtitles_zip", "subtitles_srt", "subtitles_vtt"]:
             allowed_kinds.extend(["subtitles_zip", "subtitles_srt", "subtitles_vtt"])
@@ -363,14 +361,6 @@ def download_artifact(
         target_kind = "final_video"
         media_type = "video/mp4"
         filename = f"lecture_dub_{job.id}.mp4"
-    elif kind == "video_subtitled":
-        target_kind = "final_video_subtitled"
-        media_type = "video/mp4"
-        filename = f"lecture_dub_subtitled_{job.id}.mp4"
-    elif kind == "video_bundle":
-        target_kind = "video_bundle"
-        media_type = "application/zip"
-        filename = f"lecture_video_and_subtitles_{job.id}.zip"
     elif kind == "subtitles_zip":
         target_kind = "subtitles_zip"
         media_type = "application/zip"
@@ -409,70 +399,12 @@ def download_artifact(
         file_path = storage.get_path(f"jobs/{job.id}/output/dub_audio.mp3")
     elif target_kind == "final_video" and storage.exists(f"jobs/{job.id}/output/final.mp4"):
         file_path = storage.get_path(f"jobs/{job.id}/output/final.mp4")
-    elif target_kind == "final_video_subtitled":
-        subtitled_key = f"jobs/{job.id}/output/final_subtitled.mp4"
-        if storage.exists(subtitled_key):
-            file_path = storage.get_path(subtitled_key)
-        else:
-            from backend.app.pipeline.video_muxer import burn_subtitles_to_video
-            from backend.app.pipeline.subtitle_generator import generate_srt
-            from backend.app.db.models.segment import Segment
-
-            final_mp4 = storage.get_path(f"jobs/{job.id}/output/final.mp4")
-            srt_path = storage.get_path(f"jobs/{job.id}/output/subtitles.srt")
-            if not srt_path.is_file():
-                segs = db.query(Segment).filter(Segment.job_id == job.id).order_by(Segment.idx.asc()).all()
-                if segs:
-                    generate_srt(segs, srt_path, include_speaker=False)
-
-            if final_mp4.is_file() and srt_path.is_file():
-                out_subtitled = storage.get_path(subtitled_key)
-                try:
-                    burn_subtitles_to_video(final_mp4, srt_path, out_subtitled)
-                    file_path = out_subtitled
-                except Exception as ex_b:
-                    logger.warning(f"On-the-fly subtitle burn failed: {ex_b}, fallback to clean final.mp4")
-                    file_path = final_mp4
-            elif final_mp4.is_file():
-                file_path = final_mp4
-    elif target_kind == "video_bundle":
-        bundle_key = f"jobs/{job.id}/output/video_bundle.zip"
-        if storage.exists(bundle_key):
-            file_path = storage.get_path(bundle_key)
-        else:
-            import zipfile
-            from backend.app.db.models.segment import Segment
-            from backend.app.pipeline.subtitle_generator import generate_srt
-
-            bundle_path = storage.get_path(bundle_key)
-            bundle_path.parent.mkdir(parents=True, exist_ok=True)
-            final_mp4 = storage.get_path(f"jobs/{job.id}/output/final.mp4")
-            srt_path = storage.get_path(f"jobs/{job.id}/output/subtitles.srt")
-            if not srt_path.is_file():
-                segs = db.query(Segment).filter(Segment.job_id == job.id).order_by(Segment.idx.asc()).all()
-                if segs:
-                    generate_srt(segs, srt_path, include_speaker=False)
-
-            with zipfile.ZipFile(bundle_path, "w", zipfile.ZIP_DEFLATED) as zf:
-                if final_mp4.is_file():
-                    zf.write(final_mp4, f"lecture_dub_{job.id}.mp4")
-                if srt_path.is_file():
-                    zf.write(srt_path, f"lecture_subtitles_{job.id}.srt")
-                vtt_file = storage.get_path(f"jobs/{job.id}/output/subtitles.vtt")
-                if vtt_file.is_file():
-                    zf.write(vtt_file, f"lecture_subtitles_{job.id}.vtt")
-                mp3_file = storage.get_path(f"jobs/{job.id}/output/dub_audio.mp3")
-                if mp3_file.is_file():
-                    zf.write(mp3_file, f"lecture_dub_{job.id}.mp3")
-                subtitled_mp4 = storage.get_path(f"jobs/{job.id}/output/final_subtitled.mp4")
-                if subtitled_mp4.is_file():
-                    zf.write(subtitled_mp4, f"lecture_dub_subtitled_{job.id}.mp4")
-            file_path = bundle_path
     elif target_kind == "subtitles_zip":
         zip_key = f"jobs/{job.id}/output/subtitles_bundle.zip"
         if storage.exists(zip_key):
             file_path = storage.get_path(zip_key)
         else:
+            # On-the-fly generation if not yet generated
             from backend.app.db.models.segment import Segment
             from backend.app.pipeline.subtitle_generator import create_subtitles_bundle_zip
             segments = db.query(Segment).filter(Segment.job_id == job.id).order_by(Segment.idx.asc()).all()
@@ -513,7 +445,7 @@ def download_artifact(
 @router.get("/{job_id}/download-url")
 def get_signed_download_url(
     job_id: str,
-    kind: str = Query("video", pattern="^(video|video_subtitled|video_bundle|audio|audio_mp3|audio_wav|subtitles_zip|subtitles_srt|subtitles_vtt)$"),
+    kind: str = Query("video", pattern="^(video|audio|audio_mp3|audio_wav|subtitles_zip|subtitles_srt|subtitles_vtt)$"),
     format: str = Query("mp3", pattern="^(mp3|wav)$"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)

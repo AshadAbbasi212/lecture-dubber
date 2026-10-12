@@ -41,9 +41,7 @@ production_run_summary.json
 *transcript.json
 *transcript.txt
 *.srt
-!docs/assets/*.srt
 *.vtt
-!docs/assets/*.vtt
 
 # OS & Editor Files
 .DS_Store
