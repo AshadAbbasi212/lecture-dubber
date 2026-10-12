@@ -5,7 +5,7 @@ Recorded during Phase 0 research spikes and hardware/license verification (Octob
 ---
 
 ## Hardware & Environment Reality Check (2026-10-07)
-- **Target in Docs:** Windows 10/11, 1 NVIDIA GPU with 8 GB VRAM.
+- **Target in Docs:** Windows 10/11, 1 NVIDIA GPU with 4 GB VRAM (e.g. GTX 1650, RTX 3050 Laptop, Quadro M1200 or higher).
 - **Physically Detected on this PC:**
   - GPU: NVIDIA Quadro M1200 Mobile (GM107 / Maxwell architecture, Compute Capability 5.0), **4096 MiB (4 GB) VRAM** (only ~3412 MiB free), Driver 582.53.
   - CPU: Intel Core i7-6820HQ (4 cores, 8 threads @ 2.70GHz, Skylake).
@@ -17,7 +17,7 @@ Recorded during Phase 0 research spikes and hardware/license verification (Octob
   2. CTranslate2 runs on this GPU only in `float32`, which exceeds 4 GB VRAM for models larger than `small`.
   3. However, on CPU with AVX2, CTranslate2 INT8 runs at high speed (`base` at 0.28x RTF, `small` at 0.73x RTF).
   4. Demucs (`htdemucs`) runs natively on the Quadro M1200 GPU in PyTorch (`float32`), taking 5.42s for 15s audio (0.36x RTF) using only **585.2 MiB VRAM**.
-- **Architectural Decision:** Code the pipeline with flexible execution device configs (`auto`: detect GPU VRAM and compute capability; run Demucs on GPU, run ASR/TTS on GPU if modern 8 GB card or fall back smoothly to CPU/INT8 if on 4 GB/Maxwell).
+- **Architectural Decision:** Code the pipeline with flexible execution device configs (`auto`: detect GPU VRAM and compute capability; run Demucs on GPU, run ASR/TTS on GPU if supported or fall back smoothly to CPU/INT8 on 4 GB/Maxwell). Peak pipeline memory consumption is maintained under 3.5 GiB at all times.
 
 ---
 

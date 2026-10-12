@@ -17,7 +17,7 @@ Reference experience: YouTube auto dubbing.
 |---|---|
 | C1 | Commercial product: every model, library and dataset must allow commercial use |
 | C2 | All AI inference runs locally. No hosted LLM, TTS, ASR or lip-sync APIs |
-| C3 | Hardware: Windows PC, one NVIDIA GPU, 8 GB VRAM |
+| C3 | Hardware: Windows PC, one NVIDIA GPU, 4 GB+ VRAM |
 | C4 | Source language: any (auto-detected) |
 | C5 | Target languages in v1: English and Urdu |
 | C6 | Typical input: 30 to 60 minute lectures |

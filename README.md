@@ -14,25 +14,31 @@
 **Free, Open-Source, and 100% Local AI Video Dubbing & Video Translation Platform for Education and Creators.**  
 Translate educational lectures and videos into 12 languages with authentic neural voices, background music preservation, and sample-accurate A/V sync — running completely offline on standard workstation hardware. Zero subscription fees, zero cloud API limits, and zero data leakage.
 
-[Live Demo](#live-demonstration) • [Features](#key-features) • [Comparison](#-how-lecture-dubber-compares) • [Architecture](#system-architecture) • [Quick Start](#quick-start) • [Supported Languages](#-supported-languages--neural-voices) • [License](#licensing--commercial-freedom)
+[Video Comparison](#-side-by-side-dubbing-comparison) • [Features](#key-features) • [Comparison](#-how-lecture-dubber-compares) • [Architecture](#system-architecture) • [Quick Start](#quick-start) • [Supported Languages](#-supported-languages--neural-voices) • [License](#licensing--commercial-freedom)
 
 <br>
 
-<p align="center">
-  <video src="docs/assets/demo_dubbed_lecture.mp4" controls="controls" width="680" style="max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-    <a href="https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/demo_dubbed_lecture.mp4">Watch 1-Minute Dubbed Lecture Video</a>
-  </video>
-  <br>
-  <a href="https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/demo_dubbed_lecture.mp4">
-    <img src="docs/assets/demo.gif" alt="Click to Watch 1-Minute Dubbed Lecture Video" width="680" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
-  </a>
-  <br>
-  <em><b>🎬 Live 1-Minute Dubbed Lecture Demo</b>: Richard Feynman's iconic science lecture automatically transcribed, length-budgeted, translated, and dubbed into Urdu with authentic neural voice and background acoustic ducking (-12 dB) at 0.00s A/V drift.</em>
-  <br><br>
-  <a href="https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/demo_dubbed_lecture.mp4">
-    <b>▶️ Click Here to Play / Download the Full 1-Minute Dubbed Video (4.5 MB MP4)</b>
-  </a>
-</p>
+<div align="center">
+
+### 🎬 Side-by-Side Dubbing Comparison
+
+*Experience the quality: Compare the original English lecture with the locally synthesized Urdu dubbed lecture.*
+
+| 🇺🇸 Original English Lecture | 🇵🇰 AI-Dubbed Urdu Lecture |
+| :---: | :---: |
+| <video src="docs/assets/original_lecture_english.mp4" controls width="360" style="max-width: 100%; border-radius: 8px;"></video> | <video src="docs/assets/dubbed_lecture_urdu.mp4" controls width="360" style="max-width: 100%; border-radius: 8px;"></video> |
+| **Speaker:** Richard Feynman (English) | **Dubbed Voice:** Tariq Scholar (Urdu) |
+| **Duration:** 1 min 2 sec (62.55s) | **Duration:** 1 min 2 sec (Exact 62.55s match) |
+| **Audio Track:** Original classroom microphone | **Audio Track:** Local Piper neural voice + room acoustics (-12 dB ducked) |
+| [**▶️ Play / Download Original English (3.3 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/original_lecture_english.mp4) | [**▶️ Play / Download Dubbed Urdu (3.3 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_urdu.mp4) |
+
+<br>
+
+<a href="https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_urdu.mp4">
+  <img src="docs/assets/demo.gif" alt="Lecture Dubber Pipeline Demonstration" width="680" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+</a>
+<br>
+<em><b>Pipeline Demonstration</b>: 62-second lecture automatically transcribed, length-budgeted, translated into Urdu, synthesized with Tariq neural voice, and muxed with zero A/V drift on 4 GB VRAM hardware.</em>
 
 </div>
 
@@ -50,7 +56,7 @@ Translate educational lectures and videos into 12 languages with authentic neura
 | **Watermarks** | **Zero Watermark** | Watermarked free tier | Watermarked free tier |
 | **Human Review Gate**| **Bilingual Side-by-Side Review** | Post-generation only | Black-box output |
 | **Subtitles Included**| **Synced Bilingual (.srt & .vtt)** | Paid add-on | Paid add-on |
-| **Hardware Required**| **Consumer NVIDIA GPU (8 GB VRAM)** | Cloud subscription | Cloud subscription |
+| **Hardware Required**| **Consumer NVIDIA GPU (4 GB VRAM)** | Cloud subscription | Cloud subscription |
 
 ---
 
@@ -58,7 +64,7 @@ Translate educational lectures and videos into 12 languages with authentic neura
 
 **Lecture Dubber** solves the challenge of translating academic lectures, seminars, and technical discourses into multiple languages without losing the original speaker's vocal nuance, pacing, and room ambience.
 
-Unlike cloud-dependent dubbing APIs that charge steep per-minute rates and send sensitive intellectual property to external servers, **Lecture Dubber runs 100% locally on your machine**. It requires zero external AI API keys, produces zero telemetry, and is engineered to run seamlessly on a standard consumer or workstation NVIDIA GPU (8 GB VRAM).
+Unlike cloud-dependent dubbing APIs that charge steep per-minute rates and send sensitive intellectual property to external servers, **Lecture Dubber runs 100% locally on your machine**. It requires zero external AI API keys, produces zero telemetry, and is engineered to run seamlessly on standard consumer or laptop NVIDIA GPUs with **4 GB VRAM** (e.g. GTX 1650, RTX 3050 Laptop, Quadro, or higher).
 
 ### Why Lecture Dubber?
 
@@ -188,7 +194,7 @@ Benchmarked on host hardware: **Windows 11, Intel Core i7, NVIDIA Quadro GPU (4�
 | **Video Muxing** | FFmpeg Stream Copy | **0.02x** | ~12 seconds | Minimal |
 | **Full Pipeline** | End-to-End Execution | **~1.1x** | **~11 min total** | **< 3.5 GiB max** |
 
-*Note: GPU stages execute sequentially under a single-concurrency lock (`gpu_lock.py`), ensuring models never contend for VRAM and preventing out-of-memory errors on 8 GB cards.*
+*Note: GPU stages execute sequentially under a single-concurrency lock (`gpu_lock.py`), ensuring models never contend for VRAM and preventing out-of-memory errors on 4 GB entry-level and laptop graphics cards.*
 
 ---
 
@@ -199,7 +205,7 @@ Benchmarked on host hardware: **Windows 11, Intel Core i7, NVIDIA Quadro GPU (4�
 - **Python:** 3.10 or 3.11
 - **Node.js:** 18 LTS or newer (npm included)
 - **FFmpeg:** 6.0+ with `ffprobe` accessible on your PATH (`winget install Gyan.FFmpeg`)
-- **NVIDIA GPU:** 4 GB VRAM minimum (8 GB VRAM recommended) with CUDA drivers
+- **NVIDIA GPU:** 4 GB VRAM (GTX 1650, RTX 3050 Laptop, Quadro, or higher) with CUDA drivers (peak pipeline VRAM < 3.5 GiB)
 
 ### 1. Installation
 

@@ -1,6 +1,6 @@
 # Windows setup
 
-Target: Windows 10/11, NVIDIA GPU with 8 GB VRAM.
+Target: Windows 10/11, NVIDIA GPU with 4 GB+ VRAM (e.g., GTX 1650, RTX 3050 Laptop, Quadro M1200 or higher).
 
 ## Prerequisites
 
