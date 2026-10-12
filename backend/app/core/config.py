@@ -51,21 +51,22 @@ class Settings(BaseSettings):
 
     def get_ffmpeg_cmd(self) -> str:
         import shutil
-        if shutil.which(self.FFMPEG_PATH):
-            return self.FFMPEG_PATH
-        # Check standard WinGet path as fallback on Windows
+        found = shutil.which(self.FFMPEG_PATH)
+        if found:
+            return str(Path(found).resolve())
         winget_bin = Path(r"C:\Users\David\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.1-essentials_build\bin\ffmpeg.exe")
         if winget_bin.is_file():
-            return str(winget_bin)
+            return str(winget_bin.resolve())
         return self.FFMPEG_PATH
 
     def get_ffprobe_cmd(self) -> str:
         import shutil
-        if shutil.which(self.FFPROBE_PATH):
-            return self.FFPROBE_PATH
+        found = shutil.which(self.FFPROBE_PATH)
+        if found:
+            return str(Path(found).resolve())
         winget_bin = Path(r"C:\Users\David\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.1-essentials_build\bin\ffprobe.exe")
         if winget_bin.is_file():
-            return str(winget_bin)
+            return str(winget_bin.resolve())
         return self.FFPROBE_PATH
 
 

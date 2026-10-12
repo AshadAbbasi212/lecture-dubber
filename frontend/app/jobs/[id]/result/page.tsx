@@ -3,7 +3,6 @@
 import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
 import { api, Job, SegmentItem } from "@/lib/api";
 import {
   Film,
@@ -45,11 +44,69 @@ function formatTimeVtt(seconds: number): string {
   return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
 }
 
+const LANGUAGE_DISPLAY_NAMES: Record<string, string> = {
+  ar: "Arabic (العربية)",
+  zh: "Chinese (中文)",
+  ru: "Russian (Русский)",
+  en: "English (EN)",
+  ur: "Urdu (اردو)",
+  es: "Spanish (Español)",
+  fr: "French (Français)",
+  de: "German (Deutsch)",
+  hi: "Hindi (हिन्दी)",
+  pt: "Portuguese (Português)",
+  it: "Italian (Italiano)",
+  tr: "Turkish (Türkçe)",
+};
+
+const VOICE_DISPLAY_NAMES: Record<string, string> = {
+  // English
+  ryan: "Ryan (American Scholar Baritone)",
+  amy: "Amy (Academic Narrator - Female)",
+  alan: "Alan (British Professor)",
+  lessac: "Lessac (Studio Expressive - Female)",
+  kusal: "Kusal (Clear Lecturer)",
+  reza: "Reza (Deep Narrator)",
+  l2arctic: "L2-Arctic (Global English)",
+  // Arabic
+  kareem: "Kareem (Classical Scholar - Male)",
+  maryam: "Maryam (Academic Lecturer - Female)",
+  // Chinese
+  huayan: "Huayan (Mandarin Studio - Female)",
+  chaowen: "Chaowen (Mandarin Professor - Male)",
+  // Russian
+  denis: "Denis (Russian Academic - Male)",
+  irina: "Irina (Russian Studio - Female)",
+  // Spanish
+  dave: "Dave (Castilian Professor - Male)",
+  sharvard: "Elena (Castilian Academic - Female)",
+  // French
+  siwis: "Siwis (Sorbonne Academic - Female)",
+  gilles: "Gilles (Parisian Professor - Male)",
+  // German
+  thorsten: "Thorsten (German Professor - Male)",
+  kerstin: "Kerstin (German Lecturer - Female)",
+  // Hindi
+  pratham: "Pratham (Hindi Academic - Male)",
+  priyamvada: "Priyamvada (Hindi Narrator - Female)",
+  // Portuguese
+  faber: "Faber (Brazilian Academic - Male)",
+  larissa: "Larissa (Brazilian Narrator - Female)",
+  // Italian
+  paola: "Paola (Florentine Academic - Female)",
+  riccardo: "Riccardo (Italian Professor - Male)",
+  // Turkish
+  dfki: "Kerem (Turkish Lecturer - Male)",
+  leyla: "Leyla (Turkish Narrator - Female)",
+  // Urdu
+  tariq: "Tariq (Bayan Scholar - Male)",
+  ayesha: "Ayesha (Academic Lecturer - Female)",
+};
+
 function JobResultContent({ params }: ResultPageProps) {
   const resolvedParams = use(params);
   const jobId = resolvedParams.id;
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
 
   const [job, setJob] = useState<Job | null>(null);
   const [segments, setSegments] = useState<SegmentItem[]>([]);
@@ -65,17 +122,11 @@ function JobResultContent({ params }: ResultPageProps) {
   const [signedAudioUrl, setSignedAudioUrl] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [downloadingType, setDownloadingType] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push(`/login?next=/jobs/${jobId}/result`);
-      return;
-    }
-
-    if (user) {
-      fetchJobAndSegments();
-    }
-  }, [user, authLoading, jobId]);
+    fetchJobAndSegments();
+  }, [jobId]);
 
   const fetchJobAndSegments = async () => {
     try {
@@ -118,6 +169,36 @@ function JobResultContent({ params }: ResultPageProps) {
     navigator.clipboard.writeText(text);
     setCopiedLink(label);
     setTimeout(() => setCopiedLink(null), 3000);
+  };
+
+  const handleDownload = async (url: string, filename: string, type: string) => {
+    setDownloadingType(type);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.warn("Direct blob download failed, falling back to window open:", err);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } finally {
+      setDownloadingType(null);
+    }
   };
 
   // Subtitle download handlers
@@ -166,7 +247,7 @@ function JobResultContent({ params }: ResultPageProps) {
     (s) => currentTime >= s.start && currentTime <= s.end
   );
 
-  if (authLoading || (loading && !job)) {
+  if (loading && !job) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center space-y-4">
@@ -227,8 +308,10 @@ function JobResultContent({ params }: ResultPageProps) {
   }
 
   const directVideoUrl = signedVideoUrl || api.getDownloadUrl(job.id, "video");
+  const streamVideoUrl = `${directVideoUrl}${directVideoUrl.includes("?") ? "&" : "?"}inline=true`;
   const directMp3Url = signedAudioUrl || api.getDownloadUrl(job.id, "audio", "mp3");
   const directWavUrl = api.getDownloadUrl(job.id, "audio", "wav");
+  const directZipUrl = api.getDownloadUrl(job.id, "subtitles_zip");
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-8">
@@ -308,7 +391,7 @@ function JobResultContent({ params }: ResultPageProps) {
             controls
             playsInline
             preload="metadata"
-            src={directVideoUrl}
+            src={streamVideoUrl}
             onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
             className="w-full h-full object-contain"
           >
@@ -318,7 +401,10 @@ function JobResultContent({ params }: ResultPageProps) {
           {/* Subtitle Cue Overlay */}
           {subtitlesEnabled && activeSubtitle && (
             <div className="absolute bottom-12 left-1/2 -translate-x-1/2 max-w-[85%] text-center pointer-events-none z-10 transition-all duration-150">
-              <div className="inline-block bg-black/90 text-white text-sm sm:text-base px-5 py-2.5 rounded-2xl backdrop-blur-md border border-white/15 shadow-2xl font-medium tracking-wide leading-relaxed">
+              <div 
+                className="inline-block bg-black/90 text-white text-sm sm:text-base px-5 py-2.5 rounded-2xl backdrop-blur-md border border-white/15 shadow-2xl font-medium tracking-wide leading-relaxed"
+                dir={["ar", "ur"].includes(job.target_lang?.toLowerCase()) ? "rtl" : "ltr"}
+              >
                 {activeSubtitle.speaker && (
                   <span className="text-amber-400 font-semibold mr-2">
                     [{activeSubtitle.speaker === "sheikh_ul_wazaif" ? "Sheikh-ul-Wazaif" : (activeSubtitle.speaker === "narrator" ? "Narrator" : activeSubtitle.speaker)}]:
@@ -332,12 +418,13 @@ function JobResultContent({ params }: ResultPageProps) {
 
         <div className="p-4 bg-zinc-950/40 text-xs text-zinc-400 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4 flex-wrap">
-            <span>Target: <strong className="text-white uppercase">{job.target_lang === "ur" ? "Urdu (اردو)" : "English (EN)"}</strong></span>
-            <span>Neural Voice: <strong className="text-white">Multi-Speaker Piper (Ryan + Lessac)</strong></span>
+            <span>Target: <strong className="text-white uppercase">{LANGUAGE_DISPLAY_NAMES[job.target_lang?.toLowerCase()] || job.target_lang.toUpperCase()}</strong></span>
+            <span>Neural Voice: <strong className="text-white">{VOICE_DISPLAY_NAMES[job.options?.selected_voice?.toLowerCase()] || (job.options?.selected_voice ? job.options.selected_voice.charAt(0).toUpperCase() + job.options.selected_voice.slice(1) : (job.target_lang === "ar" ? "Kareem (Arabic Scholar)" : "Neural Voice Synthesizer"))}</strong></span>
+            <span>Audio Tracks: <strong className="text-emerald-400 font-semibold">Dual-Audio (Dubbed + Original)</strong></span>
             <span>Mastering: <strong className="text-white">-16 LUFS, -12dB Broadcast Ducking</strong></span>
             <span>Captions: <strong className={subtitlesEnabled ? "text-emerald-400 font-semibold" : "text-zinc-500"}>{subtitlesEnabled ? "Active Overlay" : "Disabled"}</strong></span>
           </div>
-          <span className="text-zinc-500">Muxed via stream-copy with embedded soft subtitles</span>
+          <span className="text-zinc-500">Muxed via stream-copy with embedded soft subtitles & dual audio tracks</span>
         </div>
       </div>
 
@@ -367,14 +454,23 @@ function JobResultContent({ params }: ResultPageProps) {
             </div>
 
             <div className="pt-6">
-              <a
-                href={directVideoUrl}
-                download={`lecture_dub_${job.id}.mp4`}
-                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
+              <button
+                onClick={() => handleDownload(directVideoUrl, `lecture_dub_${job.id}.mp4`, "video")}
+                disabled={downloadingType === "video"}
+                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-75 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 cursor-pointer"
               >
-                <Download className="w-4 h-4" />
-                Download MP4
-              </a>
+                {downloadingType === "video" ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Downloading MP4...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Download MP4
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
@@ -393,14 +489,23 @@ function JobResultContent({ params }: ResultPageProps) {
             </div>
 
             <div className="pt-6">
-              <a
-                href={directMp3Url}
-                download={`lecture_dub_${job.id}.mp3`}
-                className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 border border-zinc-700"
+              <button
+                onClick={() => handleDownload(directMp3Url, `lecture_dub_${job.id}.mp3`, "mp3")}
+                disabled={downloadingType === "mp3"}
+                className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-75 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer"
               >
-                <Download className="w-4 h-4" />
-                Download MP3
-              </a>
+                {downloadingType === "mp3" ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Downloading MP3...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Download MP3
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
@@ -419,14 +524,23 @@ function JobResultContent({ params }: ResultPageProps) {
             </div>
 
             <div className="pt-6">
-              <a
-                href={directWavUrl}
-                download={`lecture_dub_${job.id}.wav`}
-                className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 border border-zinc-700"
+              <button
+                onClick={() => handleDownload(directWavUrl, `lecture_dub_${job.id}.wav`, "wav")}
+                disabled={downloadingType === "wav"}
+                className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-75 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 border border-zinc-700 cursor-pointer"
               >
-                <Download className="w-4 h-4" />
-                Download WAV
-              </a>
+                {downloadingType === "wav" ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Downloading WAV...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Download WAV
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
@@ -444,23 +558,44 @@ function JobResultContent({ params }: ResultPageProps) {
               </div>
             </div>
 
-            <div className="pt-6 flex gap-2">
+            <div className="pt-4 space-y-2">
               <button
-                onClick={handleDownloadSrt}
-                className="flex-1 py-2.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border border-zinc-700"
-                title="Download standard SubRip Subtitle file"
+                onClick={() => handleDownload(directZipUrl, `lecture_subtitles_${job.id}.zip`, "subtitles_zip")}
+                disabled={downloadingType === "subtitles_zip"}
+                className="w-full py-2 px-3 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 cursor-pointer"
+                title="Download comprehensive ZIP package with all subtitle formats, bilingual tracks, and lecture transcript"
               >
-                <Download className="w-3.5 h-3.5" />
-                .SRT
+                {downloadingType === "subtitles_zip" ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    Packaging ZIP...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5" />
+                    Download Pack (.ZIP)
+                  </>
+                )}
               </button>
-              <button
-                onClick={handleDownloadVtt}
-                className="flex-1 py-2.5 px-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border border-zinc-700"
-                title="Download WebVTT file"
-              >
-                <Download className="w-3.5 h-3.5" />
-                .VTT
-              </button>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDownloadSrt}
+                  className="flex-1 py-1.5 px-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1 border border-zinc-700 cursor-pointer"
+                  title="Download standard SubRip Subtitle file"
+                >
+                  <Download className="w-3 h-3" />
+                  .SRT
+                </button>
+                <button
+                  onClick={handleDownloadVtt}
+                  className="flex-1 py-1.5 px-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1 border border-zinc-700 cursor-pointer"
+                  title="Download WebVTT file"
+                >
+                  <Download className="w-3 h-3" />
+                  .VTT
+                </button>
+              </div>
             </div>
           </div>
         </div>

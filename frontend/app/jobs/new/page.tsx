@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { 
   Upload, 
@@ -13,19 +12,25 @@ import {
   AlertCircle, 
   CheckCircle2, 
   ArrowRight,
-  Info
+  Info,
+  Play,
+  Pause,
+  Volume2
 } from "lucide-react";
+import VoiceGallery from "@/components/VoiceGallery";
 
 export default function NewJobPage() {
   const router = useRouter();
-  const { user } = useAuth();
 
   const [tab, setTab] = useState<"upload" | "link">("upload");
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
-  const [targetLang, setTargetLang] = useState("ur");
-  const [sourceLang, setSourceLang] = useState("en");
+  const [targetLang, setTargetLang] = useState("en");
+  const [sourceLang, setSourceLang] = useState("ur");
+  const [selectedVoice, setSelectedVoice] = useState("ryan");
+  const [singleSpeaker, setSingleSpeaker] = useState(true);
+  const [separationMode, setSeparationMode] = useState("fast");
   const [cloneVoice, setCloneVoice] = useState(true);
   const [skipReview, setSkipReview] = useState(false);
   const [generateSubtitles, setGenerateSubtitles] = useState(true);
@@ -33,6 +38,27 @@ export default function NewJobPage() {
   const [voiceConsent, setVoiceConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const handleTargetLangChange = (newLang: string) => {
+    setTargetLang(newLang);
+    const defaultVoiceMap: Record<string, string> = {
+      en: "ryan",
+      zh: "huayan",
+      ru: "denis",
+      ar: "kareem",
+      es: "dave",
+      fr: "siwis",
+      de: "thorsten",
+      hi: "pratham",
+      pt: "faber",
+      it: "paola",
+      tr: "dfki",
+      ur: "tariq"
+    };
+    if (defaultVoiceMap[newLang]) {
+      setSelectedVoice(defaultVoiceMap[newLang]);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -130,6 +156,9 @@ export default function NewJobPage() {
         generate_subtitles: generateSubtitles,
         ownership_confirmed: ownershipConfirmed,
         voice_consent: voiceConsent,
+        selected_voice: selectedVoice,
+        separation_mode: separationMode,
+        single_speaker: singleSpeaker,
       });
 
       router.push(`/jobs/${job.id}`);
@@ -269,11 +298,21 @@ export default function NewJobPage() {
               </label>
               <select
                 value={targetLang}
-                onChange={(e) => setTargetLang(e.target.value)}
+                onChange={(e) => handleTargetLangChange(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/80 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="ur">Urdu (اردو) — Natural Piper ONNX & Tone Transfer</option>
-                <option value="en">English (US/UK) — MeloTTS & OpenVoice</option>
+                <option value="en">English (US/UK) — 7 Multi-Speaker Voices</option>
+                <option value="zh">Chinese / 中文 (Mandarin) — Huayan (华研)</option>
+                <option value="ru">Russian / Русский — Denis & Irina</option>
+                <option value="ar">Arabic / العربية — Kareem (كريم)</option>
+                <option value="es">Spanish / Español — Dave (Castilian)</option>
+                <option value="fr">French / Français — Siwis (Céline)</option>
+                <option value="de">German / Deutsch — Thorsten Baritone</option>
+                <option value="hi">Hindi / हिन्दी — Pratham (प्रथम)</option>
+                <option value="pt">Portuguese / Português — Faber (Brazilian)</option>
+                <option value="it">Italian / Italiano — Paola (Florentine)</option>
+                <option value="tr">Turkish / Türkçe — Kerem (DFKI)</option>
+                <option value="ur">Urdu / اردو — Tariq Bayan Scholar</option>
               </select>
             </div>
 
@@ -286,10 +325,67 @@ export default function NewJobPage() {
                 onChange={(e) => setSourceLang(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/80 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="en">English (default)</option>
-                <option value="ur">Urdu</option>
-                <option value="auto">Auto-Detect via Faster-Whisper</option>
+                <option value="auto">Auto-Detect via Faster-Whisper (Recommended)</option>
+                <option value="ur">Urdu (اردو)</option>
+                <option value="en">English (US/UK)</option>
+                <option value="ar">Arabic (العربية)</option>
+                <option value="zh">Chinese / 中文</option>
+                <option value="ru">Russian (Русский)</option>
+                <option value="es">Spanish (Español)</option>
+                <option value="fr">French (Français)</option>
+                <option value="de">German (Deutsch)</option>
+                <option value="hi">Hindi (हिन्दी)</option>
+                <option value="pt">Portuguese (Português)</option>
+                <option value="it">Italian (Italiano)</option>
+                <option value="tr">Turkish (Türkçe)</option>
               </select>
+            </div>
+          </div>
+
+          {/* 3D Neural Voice Audition & Selection Gallery */}
+          <div className="pt-2 border-t border-slate-800/80">
+            <VoiceGallery
+              selectedVoice={selectedVoice}
+              onSelectVoice={(vId) => setSelectedVoice(vId)}
+              targetLang={targetLang}
+            />
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="singleSpeakerToggle"
+                  checked={singleSpeaker}
+                  onChange={(e) => setSingleSpeaker(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-700 text-indigo-600 bg-slate-950 focus:ring-indigo-500 cursor-pointer"
+                />
+                <label htmlFor="singleSpeakerToggle" className="cursor-pointer">
+                  <span className="text-xs font-bold text-slate-200 block">Solo Lecture Mode (Single Speaker)</span>
+                  <span className="text-[11px] text-slate-400 block mt-0.5 leading-relaxed">
+                    Maintains one consistent narrator voice and prevents false multi-speaker switches on rhetorical questions.
+                  </span>
+                </label>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800">
+                <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center justify-between">
+                  <span>Audio Separation Speed</span>
+                  <span className="text-[10px] text-emerald-400 font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                    Fast (~2-3m)
+                  </span>
+                </label>
+                <select
+                  value={separationMode}
+                  onChange={(e) => setSeparationMode(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="fast">Fast Vocal Separation (~2-3 mins total) — Recommended</option>
+                  <option value="demucs">Deep Studio Stem Isolation (GPU Demucs — Slower)</option>
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Extracts clear speech immediately without GPU stalls.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -396,15 +492,16 @@ export default function NewJobPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-6 rounded-xl font-medium text-white bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-base"
+            className="w-full py-4 px-6 rounded-2xl font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 shadow-xl shadow-indigo-600/35 transition-all flex items-center justify-center gap-2.5 text-base btn-3d disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {loading ? (
               <span className="inline-flex items-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-                Processing & Starting Job...
+                Processing & Starting Pipeline...
               </span>
             ) : (
               <>
+                <Sparkles className="w-5 h-5 text-amber-300" />
                 Start Lecture Dubbing Pipeline
                 <ArrowRight className="w-5 h-5" />
               </>

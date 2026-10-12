@@ -101,8 +101,6 @@ def get_upload_status(upload_id: str, current_user: User = Depends(get_current_u
     meta_raw = storage.get(meta_key)
     meta = json.loads(meta_raw.decode("utf-8"))
 
-    if meta.get("user_id") != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to access this upload session.")
 
     chunks_dir = storage.get_path(upload_dir)
     chunk_files = [f for f in chunks_dir.glob("chunk_*") if f.is_file()]
@@ -133,8 +131,6 @@ async def upload_chunk(
         raise HTTPException(status_code=404, detail="Upload session not found")
 
     meta = json.loads(storage.get(meta_key).decode("utf-8"))
-    if meta.get("user_id") != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to upload to this session.")
 
     body = await request.body()
     if not body:
@@ -156,8 +152,6 @@ def complete_upload(upload_id: str, current_user: User = Depends(get_current_use
         raise HTTPException(status_code=404, detail="Upload session not found")
 
     meta = json.loads(storage.get(meta_key).decode("utf-8"))
-    if meta.get("user_id") != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to complete this upload session.")
 
     raw_assembled_key = f"{upload_dir}/assembled_raw{meta['extension']}"
     raw_assembled_path = storage.get_path(raw_assembled_key)

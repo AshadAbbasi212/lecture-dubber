@@ -19,8 +19,10 @@ import {
   Languages, 
   Layers, 
   SlidersHorizontal,
-  Download
+  Download,
+  Gamepad2
 } from "lucide-react";
+import DubberArcade from "@/components/DubberArcade";
 
 const STAGES = [
   { id: "ingesting", label: "Ingest", icon: Film },
@@ -45,6 +47,7 @@ function JobDetailContent({ params }: JobDetailPageProps) {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState(false);
+  const [showArcade, setShowArcade] = useState(true);
 
   const fetchJob = async () => {
     try {
@@ -288,6 +291,33 @@ function JobDetailContent({ params }: JobDetailPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Interactive Dubber Arcade Lounge (Keeps user occupied while dubbing generates) */}
+      {(job.status === "running" || job.status === "queued" || showArcade) && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Gamepad2 className="w-4 h-4 text-cyan-400" />
+              <span>Interactive Lounge: SoundWave Surfer</span>
+            </h3>
+            <button
+              type="button"
+              onClick={() => setShowArcade(!showArcade)}
+              className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+            >
+              {showArcade ? "Hide Game" : "Show Arcade 🎮"}
+            </button>
+          </div>
+          {showArcade && (
+            <DubberArcade
+              jobStage={job.stage}
+              jobProgress={job.progress}
+              isJobCompleted={job.status === "completed"}
+              onViewResult={() => router.push(`/jobs/${job.id}/result`)}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

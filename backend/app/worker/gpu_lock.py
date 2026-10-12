@@ -1,8 +1,8 @@
 import threading
 from contextlib import contextmanager
 
-# In-process thread-safe lock for GPU access
-_gpu_lock = threading.Lock()
+# In-process thread-safe re-entrant lock for GPU access
+_gpu_lock = threading.RLock()
 
 
 @contextmanager

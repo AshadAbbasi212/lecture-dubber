@@ -38,6 +38,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition", "Content-Length", "Accept-Ranges"],
 )
 
 # Include API routers under /api prefix
@@ -46,3 +47,10 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(jobs_router, prefix="/api")
 app.include_router(segments_router, prefix="/api")
 app.include_router(uploads_router, prefix="/api")
+
+
+@app.get("/", include_in_schema=False)
+def root_redirect():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="http://localhost:3000")
+

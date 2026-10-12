@@ -1,6 +1,6 @@
 # Clones candidate model repos into third_party/ (shallow).
-# The agent should clone ONLY what Phase 0 shows is needed; many of these can be
-# pip-installed instead. Some repos are reference-only (see docs/MODEL_CHOICES.md).
+# Clone only models needed for local offline inference; many dependencies can be
+# pip-installed directly. Reference models are documented in docs/MODEL_CHOICES.md.
 # Run from the project root: powershell -ExecutionPolicy Bypass -File scripts\fetch_repos.ps1
 
 $repos = @(

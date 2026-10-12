@@ -44,8 +44,8 @@ def run_separation(input_path: Path, out_dir: Path, device: str = "auto"):
     model.eval()
 
     with torch.no_grad():
-        # split=True chunks long files (30-60m) to preserve VRAM
-        sources = apply_model(model, audio_tensor.to(target_device), device=target_device, split=True, overlap=0.25)
+        # split=True chunks long files to preserve VRAM, overlap=0.05 and shifts=0 for maximum speed
+        sources = apply_model(model, audio_tensor.to(target_device), device=target_device, split=True, overlap=0.05, shifts=0)
 
     # sources shape: (batch, num_sources, channels, time)
     # Stems: 0=drums, 1=bass, 2=other, 3=vocals

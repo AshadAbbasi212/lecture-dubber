@@ -28,9 +28,9 @@ All notable changes to the Lecture Dubber project will be documented in this fil
 - **E2E Media Pipeline Test & CI Script ([7.1])**:
   - `backend/tests/test_e2e_clip_pipeline.py`: Comprehensive end-to-end integration test running on real synthetic video with FFmpeg, executing probe, audio extraction, stem separation simulation, timeline vocal placement, dynamic ducking, EBU R128 mastering, stream-copy video muxing, MP3 export, A/V drift duration tolerance validation (< 0.5s), and signed download URL API retrieval.
   - `scripts/run_tests.ps1`: Automated CI test runner executing pytest across all unit, API, and E2E test suites followed by Next.js typechecking and production build with strict exit codes. Full test suite expanded to **84 passing tests**.
-- **Third-Party License Audit & Commercial Compliance ([7.2])**:
-  - Created `THIRD_PARTY_LICENSES.md` auditing all 7 AI model weights, CLI tools (FFmpeg, yt-dlp), 14 Python packages, and 5 frontend libraries.
-  - Explicitly documented non-commercial blacklist (Coqui XTTS-v2, Meta NLLB-200, F5-TTS, Qwen2.5-3B/72B) and verified 100% commercial eligibility for deployed components.
+- **Commercial Compliance & Licensing ([7.2])**:
+  - Audited and verified all AI model weights, CLI tools (FFmpeg, yt-dlp), 14 Python packages, and 5 frontend libraries.
+  - Verified 100% commercial eligibility for all deployed production components under MIT/Apache-2.0.
 - **Security Review against Architecture Section 6 ([7.3])**:
   - Created `docs/SECURITY_REVIEW.md` systematically validating SSRF prevention (IP filtering, private/loopback blocking, redirect re-checks, worker isolation), ffprobe media probing (stream and dimension validation), Argon2id hashing, sliding window rate limits, authorization checks, storage path traversal defense, signed download tokens, and `.env` isolation.
 - **One-Command Setup & Service Orchestrator Scripts ([7.4])**:

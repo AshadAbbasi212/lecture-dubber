@@ -74,7 +74,7 @@ Reference experience: YouTube auto dubbing.
 diarization, more target languages, cloud GPU workers, Postgres and S3-compatible
 storage, team workspaces, API for third parties.
 
-## 6. Assumptions made by the starter kit (confirm or change)
+## 6. Assumptions & Architectural Baseline
 
 - A1 v1 assumes **one main speaker** per video. Multi-speaker is a later phase.
 - A2 Default limits: 4 GB per file, 90 minutes per video, 14-day retention.

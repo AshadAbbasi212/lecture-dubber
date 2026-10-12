@@ -49,6 +49,9 @@ def download_youtube_video(url: str, output_path: Path) -> Dict[str, Any]:
     max_duration_seconds = settings.MAX_VIDEO_MINUTES * 60
     max_bytes = settings.MAX_UPLOAD_GB * 1024 * 1024 * 1024
 
+    ffmpeg_cmd = settings.get_ffmpeg_cmd()
+    ffmpeg_dir = str(Path(ffmpeg_cmd).parent) if Path(ffmpeg_cmd).is_file() else ffmpeg_cmd
+
     ydl_opts = {
         "format": "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
         "merge_output_format": "mp4",
@@ -58,9 +61,17 @@ def download_youtube_video(url: str, output_path: Path) -> Dict[str, Any]:
         "no_warnings": True,
         "no_color": True,
         "noplaylist": True,
+        "nopart": True,  # Critical for Windows: prevents [WinError 32] rename lock of .part files
+        "windowsfilenames": True,
+        "overwrites": True,
         "socket_timeout": settings.SSRF_TIMEOUT_SECONDS,
         "prefer_ffmpeg": True,
-        "ffmpeg_location": settings.get_ffmpeg_cmd(),
+        "ffmpeg_location": ffmpeg_dir,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"]
+            }
+        },
     }
 
     try:
@@ -89,13 +100,28 @@ def download_youtube_video(url: str, output_path: Path) -> Dict[str, Any]:
             if not downloaded_file.exists():
                 raise YouTubeImportError("Downloaded YouTube media file was not found on disk.")
 
-            # Move or rename to final output_path
-            if downloaded_file != output_path:
+            # Move or rename to final output_path with Windows lock retry
+            if downloaded_file.resolve() != output_path.resolve():
+                import time
+                import shutil
                 if output_path.exists():
-                    output_path.unlink()
-                downloaded_file.replace(output_path)
+                    try:
+                        output_path.unlink()
+                    except Exception:
+                        pass
+                moved = False
+                for attempt in range(5):
+                    try:
+                        shutil.move(str(downloaded_file), str(output_path))
+                        moved = True
+                        break
+                    except Exception:
+                        time.sleep(0.5)
+                if not moved:
+                    downloaded_file.replace(output_path)
 
-            logger.info(f"Successfully downloaded YouTube video '{info.get('title')}' to {output_path.name}")
+            safe_title = (info.get("title") or "YouTube Video").encode("ascii", "replace").decode("ascii")
+            logger.info(f"Successfully downloaded YouTube video '{safe_title}' to {output_path.name}")
 
             return {
                 "id": info.get("id"),

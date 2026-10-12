@@ -3,21 +3,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
 import { 
   Sparkles, 
   Layers, 
   PlusCircle, 
-  LogOut, 
-  LogIn, 
-  UserPlus, 
   Menu, 
   X,
   Languages
 } from "lucide-react";
 
 export function Navbar() {
-  const { user, logout } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -46,86 +41,49 @@ export function Navbar() {
 
         {/* Desktop Nav Links */}
         <nav className="hidden md:flex items-center gap-1">
-          {user ? (
-            <>
-              <Link
-                href="/dashboard"
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive("/dashboard")
-                    ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/30"
-                    : "text-slate-300 hover:text-white hover:bg-slate-800/60"
-                }`}
-              >
-                <Layers className="w-4 h-4" />
-                Dashboard
-              </Link>
-              <Link
-                href="/jobs/new"
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive("/jobs/new")
-                    ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/30"
-                    : "text-slate-300 hover:text-white hover:bg-slate-800/60"
-                }`}
-              >
-                <PlusCircle className="w-4 h-4" />
-                New Dub Job
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/#features"
-                className="px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition-colors"
-              >
-                How It Works
-              </Link>
-              <Link
-                href="/terms"
-                className="px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition-colors"
-              >
-                Compliance
-              </Link>
-            </>
-          )}
+          <Link
+            href="/dashboard"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              isActive("/dashboard")
+                ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/30"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            Dashboard
+          </Link>
+          <Link
+            href="/jobs/new"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              isActive("/jobs/new")
+                ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/30"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+            }`}
+          >
+            <PlusCircle className="w-4 h-4" />
+            New Dub Job
+          </Link>
+          <Link
+            href="/#features"
+            className="px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition-colors"
+          >
+            Features & Pipeline
+          </Link>
         </nav>
 
-        {/* User Account Actions */}
+        {/* Right Actions */}
         <div className="hidden md:flex items-center gap-3">
-          {user ? (
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-xs text-slate-400">Signed in as</div>
-                <div className="text-sm font-medium text-slate-200 max-w-[180px] truncate">
-                  {user.email}
-                </div>
-              </div>
-              <button
-                onClick={logout}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-rose-400 hover:bg-rose-500/10 border border-slate-800 transition-colors"
-                title="Log out"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden lg:inline">Sign Out</span>
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/login"
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-200 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                <LogIn className="w-4 h-4" />
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/25 transition-all"
-              >
-                <UserPlus className="w-4 h-4" />
-                Get Started
-              </Link>
-            </div>
-          )}
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Local Mode Active
+          </span>
+          <Link
+            href="/jobs/new"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/25 transition-all"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Create Dub
+          </Link>
         </div>
 
         {/* Mobile menu toggle */}
@@ -142,53 +100,31 @@ export function Navbar() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-slate-800 bg-slate-950 px-4 pt-2 pb-4 space-y-2">
-          {user ? (
-            <>
-              <div className="text-xs text-slate-400 px-3 py-1">
-                Signed in as <span className="text-slate-200 font-medium">{user.email}</span>
-              </div>
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/jobs/new"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800"
-              >
-                New Dub Job
-              </Link>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  logout();
-                }}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-rose-400 hover:bg-rose-500/10"
-              >
-                Sign Out
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-sm font-medium text-indigo-400 hover:bg-indigo-500/10"
-              >
-                Create Free Account
-              </Link>
-            </>
-          )}
+          <div className="text-xs text-emerald-400 px-3 py-1 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Local Mode Active
+          </div>
+          <Link
+            href="/dashboard"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800"
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/jobs/new"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800"
+          >
+            New Dub Job
+          </Link>
+          <Link
+            href="/#features"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800"
+          >
+            Features & Pipeline
+          </Link>
         </div>
       )}
     </header>

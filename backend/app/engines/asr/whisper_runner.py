@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -41,17 +42,21 @@ def run_transcription(audio_path: Path, model_size: str = "base", language: str 
     if compute_type == "auto":
         compute_type = "int8" if device == "cpu" else "float32"
 
-    # Initialize model
-    model = WhisperModel(model_size, device=device, compute_type=compute_type)
+    # Initialize model with maximum multi-threading throughput on CPU
+    threads = os.cpu_count() or 8
+    if device == "cpu":
+        model = WhisperModel(model_size, device=device, compute_type=compute_type, cpu_threads=threads)
+    else:
+        model = WhisperModel(model_size, device=device, compute_type=compute_type)
 
-    # Transcribe with word timestamps and Silero VAD
+    # Transcribe with word timestamps and relaxed Silero VAD to retain continuous lecture speech
     segments_gen, info = model.transcribe(
         str(audio_path),
         language=language,
         task=task,
         word_timestamps=True,
         vad_filter=True,
-        vad_parameters=dict(min_silence_duration_ms=500)
+        vad_parameters=dict(min_silence_duration_ms=1500, speech_pad_ms=400)
     )
 
     all_words = []

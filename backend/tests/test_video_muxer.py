@@ -61,6 +61,8 @@ def test_mux_video_and_audio_success(sample_video_mp4, sample_dub_wav, tmp_path)
     assert abs(res.duration - 3.0) < 0.3
     assert res.width == 320
     assert res.height == 240
+    audio_streams = [s for s in res.streams if s.get("codec_type") == "audio"]
+    assert len(audio_streams) == 2
 
 
 def test_mux_video_and_audio_drift_tolerance_failure(sample_video_mp4, tmp_path):

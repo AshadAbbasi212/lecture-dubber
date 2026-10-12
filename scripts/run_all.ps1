@@ -33,21 +33,45 @@ if (-not (Test-Path $LogsDir)) {
     New-Item -ItemType Directory -Path $LogsDir -Force | Out-Null
 }
 
-$ApiLog = Join-Path $LogsDir "api.log"
-$WorkerLog = Join-Path $LogsDir "worker.log"
+$ApiOutLog = Join-Path $LogsDir "api.out.log"
+$ApiErrLog = Join-Path $LogsDir "api.err.log"
+$WorkerOutLog = Join-Path $LogsDir "worker.out.log"
+$WorkerErrLog = Join-Path $LogsDir "worker.err.log"
+
+# Clean up stale processes on ports 8000 and 3000
+foreach ($p in @(8000, 3000)) {
+    try {
+        $conns = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue
+        foreach ($c in $conns) {
+            $pidToKill = $c.OwningProcess
+            if ($pidToKill -gt 0 -and $pidToKill -ne $PID) {
+                Write-Host "Releasing port $p (stopping orphaned process PID $pidToKill)..." -ForegroundColor Yellow
+                Stop-Process -Id $pidToKill -Force -ErrorAction SilentlyContinue
+                cmd.exe /c "taskkill /F /PID $pidToKill /T 2>nul" | Out-Null
+            }
+        }
+    } catch {}
+}
+Start-Sleep -Milliseconds 1000
 
 # Launch 1: FastAPI Backend Server
 Write-Host "[1/3] Launching FastAPI Backend on port 8000..." -ForegroundColor Green
-$ApiProcess = Start-Process -FilePath $UvicornExe `
-    -ArgumentList "backend.app.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload" `
+$ApiProcess = Start-Process -FilePath $PythonExe `
+    -ArgumentList "-m", "uvicorn", "backend.app.main:app", "--host", "127.0.0.1", "--port", "8000" `
     -WorkingDirectory $WorkspaceRoot `
+    -RedirectStandardOutput $ApiOutLog `
+    -RedirectStandardError $ApiErrLog `
     -PassThru
+
+Start-Sleep -Milliseconds 800
 
 # Launch 2: Queue Worker
 Write-Host "[2/3] Launching Background Queue Worker..." -ForegroundColor Green
 $WorkerProcess = Start-Process -FilePath $PythonExe `
     -ArgumentList "-m", "backend.app.worker.worker" `
     -WorkingDirectory $WorkspaceRoot `
+    -RedirectStandardOutput $WorkerOutLog `
+    -RedirectStandardError $WorkerErrLog `
     -PassThru
 
 # Launch 3: Frontend Web Dev Server
@@ -64,21 +88,35 @@ Write-Host "Open http://localhost:3000 in your browser to start dubbing lectures
 Write-Host "Monitoring processes... Press Enter or Ctrl+C to terminate all services." -ForegroundColor Yellow
 
 try {
-    # Wait until user interrupts or any process terminates
+    # Wait until user interrupts or any service actually stops listening
+    Start-Sleep -Seconds 3
     while ($true) {
-        if ($ApiProcess.HasExited) {
-            Write-Host "`n[ALERT] API process exited unexpectedly (ExitCode: $($ApiProcess.ExitCode))" -ForegroundColor Red
-            break
+        $apiPort = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue
+        if (-not $apiPort -and $ApiProcess.HasExited) {
+            Start-Sleep -Seconds 3
+            $apiPort = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue
+            if (-not $apiPort -and $ApiProcess.HasExited) {
+                Write-Host "`n[ALERT] API server (port 8000) is no longer listening." -ForegroundColor Red
+                break
+            }
         }
         if ($WorkerProcess.HasExited) {
-            Write-Host "`n[ALERT] Worker process exited unexpectedly (ExitCode: $($WorkerProcess.ExitCode))" -ForegroundColor Red
-            break
+            Start-Sleep -Seconds 3
+            if ($WorkerProcess.HasExited) {
+                Write-Host "`n[ALERT] Worker process exited unexpectedly (ExitCode: $($WorkerProcess.ExitCode))" -ForegroundColor Red
+                break
+            }
         }
-        if ($FrontendProcess.HasExited) {
-            Write-Host "`n[ALERT] Frontend process exited unexpectedly (ExitCode: $($FrontendProcess.ExitCode))" -ForegroundColor Red
-            break
+        $fePort = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue
+        if (-not $fePort -and $FrontendProcess.HasExited) {
+            Start-Sleep -Seconds 3
+            $fePort = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue
+            if (-not $fePort -and $FrontendProcess.HasExited) {
+                Write-Host "`n[ALERT] Frontend dev server (port 3000) is no longer listening." -ForegroundColor Red
+                break
+            }
         }
-        Start-Sleep -Seconds 2
+        Start-Sleep -Seconds 5
     }
 } finally {
     Write-Host "`nShutting down all Lecture Dubber services..." -ForegroundColor Yellow

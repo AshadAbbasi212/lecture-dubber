@@ -40,14 +40,14 @@ export default function HomePage() {
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/jobs/new"
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl font-medium text-white bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 group text-base"
+            className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 shadow-xl shadow-indigo-600/35 transition-all flex items-center justify-center gap-2 group text-base btn-3d"
           >
             Start Dubbing Lecture
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link
             href="/dashboard"
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl font-medium text-slate-200 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800 transition-all text-base"
+            className="w-full sm:w-auto px-7 py-3.5 rounded-xl font-semibold text-slate-200 hover:text-white bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 transition-all text-base shadow-lg"
           >
             View Dashboard
           </Link>
@@ -86,9 +86,9 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="glass-panel glass-panel-hover p-6 rounded-2xl space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 perspective-1000">
+            <div className="glass-panel card-3d p-6 rounded-2xl space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/10">
                 <Music className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-white">Demucs Stem Isolation</h3>
@@ -97,8 +97,8 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="glass-panel glass-panel-hover p-6 rounded-2xl space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+            <div className="glass-panel card-3d p-6 rounded-2xl space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/10">
                 <Languages className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-white">Length-Budgeted Translation</h3>
@@ -107,8 +107,8 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="glass-panel glass-panel-hover p-6 rounded-2xl space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <div className="glass-panel card-3d p-6 rounded-2xl space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/10">
                 <Mic2 className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-white">Speaker Timbre Transfer</h3>
@@ -117,8 +117,8 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="glass-panel glass-panel-hover p-6 rounded-2xl space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
+            <div className="glass-panel card-3d p-6 rounded-2xl space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/10">
                 <FileCheck2 className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-white">Review & Meaning-Drift Check</h3>
@@ -127,8 +127,8 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="glass-panel glass-panel-hover p-6 rounded-2xl space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
+            <div className="glass-panel card-3d p-6 rounded-2xl space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shadow-lg shadow-rose-500/10">
                 <SlidersHorizontal className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-white">Intelligent Timing Fit</h3>
@@ -137,8 +137,8 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="glass-panel glass-panel-hover p-6 rounded-2xl space-y-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center">
+            <div className="glass-panel card-3d p-6 rounded-2xl space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shadow-lg shadow-purple-500/10">
                 <Cpu className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-semibold text-white">Stream-Copy Muxing</h3>

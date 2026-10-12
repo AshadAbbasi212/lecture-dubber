@@ -110,7 +110,7 @@ GET    /api/jobs/{id}/download?kind=video|audio    signed, short-lived
 GET    /api/health
 ```
 
-(The agent may choose the tus protocol or a custom chunk protocol for uploads.)
+(Uploads are managed via an offset-advancing, resumable 5 MB chunked upload protocol.)
 
 ## 6. Security
 

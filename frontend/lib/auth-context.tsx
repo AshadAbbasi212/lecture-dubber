@@ -14,26 +14,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const DEFAULT_USER: User = {
+  id: "default-local-user",
+  email: "local@lecturedubber.internal",
+  role: "admin",
+  created_at: new Date().toISOString(),
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(DEFAULT_USER);
+  const [loading, setLoading] = useState(false);
 
   const refreshUser = async () => {
     try {
-      const token = api.getToken();
-      if (!token) {
-        setUser(null);
-        setLoading(false);
+      const me = await api.getMe();
+      if (me && me.id) {
+        setUser(me);
         return;
       }
-      const me = await api.getMe();
-      setUser(me);
-    } catch (err) {
-      setUser(null);
-      api.setToken(null);
-    } finally {
-      setLoading(false);
+    } catch {
+      // Fallback to local default user
     }
+    setUser(DEFAULT_USER);
   };
 
   useEffect(() => {
@@ -41,31 +43,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    setLoading(true);
     try {
       const res = await api.login(email, password);
-      setUser(res.user);
-    } finally {
-      setLoading(false);
+      if (res?.user) {
+        setUser(res.user);
+      }
+    } catch {
+      setUser(DEFAULT_USER);
     }
   };
 
   const register = async (email: string, password: string) => {
-    setLoading(true);
     try {
       const res = await api.register(email, password);
-      setUser(res.user);
-    } finally {
-      setLoading(false);
+      if (res?.user) {
+        setUser(res.user);
+      }
+    } catch {
+      setUser(DEFAULT_USER);
     }
   };
 
   const logout = () => {
-    api.setToken(null);
-    setUser(null);
-    if (typeof window !== "undefined") {
-      window.location.href = "/login";
-    }
+    // Zero-auth mode: keep local user session active
+    setUser(DEFAULT_USER);
   };
 
   return (

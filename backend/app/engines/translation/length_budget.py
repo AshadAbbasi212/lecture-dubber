@@ -1,11 +1,23 @@
 from typing import Tuple
 
 # Average speaking rates in educational speech (characters per second including spaces)
-# English: ~13-16 chars/sec (~140 words/min)
-# Urdu: ~10-13 chars/sec (~120 words/min)
+# Chinese characters: ~6-7 chars/sec (ideograms)
+# Romance languages (Spanish, Italian, Portuguese): ~15-16 chars/sec
+# Germanic & Slavic (German, Russian): ~13-14 chars/sec
+# Indic & Semitic (Arabic, Hindi, Urdu): ~11-12.5 chars/sec
 CHARS_PER_SECOND = {
     "en": 14.0,
+    "es": 15.5,
+    "ar": 12.0,
+    "zh": 6.5,
+    "ru": 13.5,
     "ur": 11.0,
+    "fr": 14.5,
+    "de": 13.0,
+    "hi": 12.5,
+    "pt": 15.0,
+    "it": 15.5,
+    "tr": 13.5,
 }
 
 

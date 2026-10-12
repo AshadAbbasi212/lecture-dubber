@@ -40,6 +40,9 @@ class JobCreateRequest(BaseModel):
     ownership_confirmed: bool = False
     voice_consent: bool = False
     generate_subtitles: bool = True
+    selected_voice: Optional[str] = "auto"
+    separation_mode: Optional[str] = "fast"
+    single_speaker: bool = False
 
 
 class JobResponse(BaseModel):
@@ -96,10 +99,16 @@ def _format_job(job: Job) -> JobResponse:
 
 
 
+SUPPORTED_TARGET_LANGUAGES = ["en", "es", "ar", "zh", "ru", "ur", "fr", "de", "hi", "pt", "it", "tr"]
+
+
 @router.post("", response_model=JobResponse, dependencies=[Depends(check_job_create_rate_limit)])
 def create_job(req: JobCreateRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    if req.target_lang not in ["en", "ur"]:
-        raise HTTPException(status_code=400, detail="Target language must be 'en' or 'ur'.")
+    if req.target_lang not in SUPPORTED_TARGET_LANGUAGES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Target language '{req.target_lang}' is not supported. Supported: {', '.join(SUPPORTED_TARGET_LANGUAGES)}"
+        )
 
     if req.source_type not in ["upload", "url", "youtube", "drive", "dropbox"]:
         raise HTTPException(status_code=400, detail=f"Unsupported source_type '{req.source_type}'.")
@@ -142,7 +151,10 @@ def create_job(req: JobCreateRequest, current_user: User = Depends(get_current_u
         "clone_voice": req.clone_voice,
         "skip_review": req.skip_review,
         "enable_lipsync": req.enable_lipsync,
-        "generate_subtitles": req.generate_subtitles
+        "generate_subtitles": req.generate_subtitles,
+        "selected_voice": req.selected_voice or "auto",
+        "separation_mode": req.separation_mode or "fast",
+        "single_speaker": req.single_speaker
     }
 
     job = Job(
@@ -186,13 +198,14 @@ def create_job(req: JobCreateRequest, current_user: User = Depends(get_current_u
 
 @router.get("", response_model=List[JobResponse])
 def list_jobs(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    jobs = db.query(Job).filter(Job.user_id == current_user.id).order_by(Job.created_at.desc()).all()
+    jobs = db.query(Job).order_by(Job.created_at.desc()).all()
     return [_format_job(j) for j in jobs]
+
 
 
 @router.get("/{job_id}", response_model=JobResponse)
 def get_job(job_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
+    job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return _format_job(job)
@@ -200,7 +213,7 @@ def get_job(job_id: str, current_user: User = Depends(get_current_user), db: Ses
 
 @router.post("/{job_id}/approve", response_model=JobResponse)
 def approve_job(job_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
+    job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -229,7 +242,7 @@ def approve_job(job_id: str, current_user: User = Depends(get_current_user), db:
 
 @router.post("/{job_id}/cancel", response_model=JobResponse)
 def cancel_job(job_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
+    job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -249,7 +262,7 @@ def cancel_job(job_id: str, current_user: User = Depends(get_current_user), db: 
 
 @router.delete("/{job_id}")
 def delete_job(job_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
+    job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -266,7 +279,7 @@ def delete_job(job_id: str, current_user: User = Depends(get_current_user), db: 
 @router.get("/{job_id}/events")
 async def stream_job_events(job_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Server-Sent Events (SSE) stream for real-time progress updates."""
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
+    job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -312,15 +325,16 @@ async def stream_job_events(job_id: str, current_user: User = Depends(get_curren
 @router.get("/{job_id}/download")
 def download_artifact(
     job_id: str,
-    kind: str = Query("video", pattern="^(video|audio|audio_mp3|audio_wav)$"),
+    kind: str = Query("video", pattern="^(video|audio|audio_mp3|audio_wav|subtitles_zip|subtitles_srt|subtitles_vtt)$"),
     format: str = Query("mp3", pattern="^(mp3|wav)$"),
+    inline: bool = Query(False),
     token: Optional[str] = None,
     auth_token: Optional[str] = None,
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
-    Downloads the output file (MP4 video, MP3 audio, or mixed WAV audio).
+    Downloads the output file (MP4 video, MP3 audio, mixed WAV audio, or Subtitle bundle zip).
     Supports either authenticated user session, auth_token query param, OR a signed short-lived token.
     """
     if not current_user and auth_token:
@@ -335,22 +349,30 @@ def download_artifact(
         allowed_kinds = [kind]
         if kind in ["audio", "audio_mp3", "audio_wav"]:
             allowed_kinds.extend(["audio", "audio_mp3", "audio_wav"])
+        elif kind in ["subtitles_zip", "subtitles_srt", "subtitles_vtt"]:
+            allowed_kinds.extend(["subtitles_zip", "subtitles_srt", "subtitles_vtt"])
         if payload.get("kind") not in allowed_kinds:
             raise HTTPException(status_code=403, detail="Token kind mismatch")
-    elif not current_user:
-        raise HTTPException(status_code=401, detail="Authentication or valid token required")
-
     job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-
-    if current_user and job.user_id != current_user.id and not token:
-        raise HTTPException(status_code=403, detail="Not authorized to access this job")
 
     if kind == "video":
         target_kind = "final_video"
         media_type = "video/mp4"
         filename = f"lecture_dub_{job.id}.mp4"
+    elif kind == "subtitles_zip":
+        target_kind = "subtitles_zip"
+        media_type = "application/zip"
+        filename = f"lecture_subtitles_{job.id}.zip"
+    elif kind == "subtitles_srt":
+        target_kind = "subtitles_srt"
+        media_type = "text/plain; charset=utf-8"
+        filename = f"lecture_subtitles_{job.id}.srt"
+    elif kind == "subtitles_vtt":
+        target_kind = "subtitles_vtt"
+        media_type = "text/vtt; charset=utf-8"
+        filename = f"lecture_subtitles_{job.id}.vtt"
     elif kind == "audio_wav" or (kind == "audio" and format == "wav"):
         target_kind = "dub_mix"
         media_type = "audio/wav"
@@ -377,10 +399,41 @@ def download_artifact(
         file_path = storage.get_path(f"jobs/{job.id}/output/dub_audio.mp3")
     elif target_kind == "final_video" and storage.exists(f"jobs/{job.id}/output/final.mp4"):
         file_path = storage.get_path(f"jobs/{job.id}/output/final.mp4")
+    elif target_kind == "subtitles_zip":
+        zip_key = f"jobs/{job.id}/output/subtitles_bundle.zip"
+        if storage.exists(zip_key):
+            file_path = storage.get_path(zip_key)
+        else:
+            # On-the-fly generation if not yet generated
+            from backend.app.db.models.segment import Segment
+            from backend.app.pipeline.subtitle_generator import create_subtitles_bundle_zip
+            segments = db.query(Segment).filter(Segment.job_id == job.id).order_by(Segment.idx.asc()).all()
+            if segments:
+                zip_path = storage.get_path(zip_key)
+                create_subtitles_bundle_zip(segments, zip_path, target_lang=job.target_lang or "ur", source_lang=job.source_lang or "ur")
+                file_path = zip_path
+    elif target_kind == "subtitles_srt":
+        srt_key = f"jobs/{job.id}/output/subtitles.srt"
+        if storage.exists(srt_key):
+            file_path = storage.get_path(srt_key)
+        else:
+            from backend.app.db.models.segment import Segment
+            from backend.app.pipeline.subtitle_generator import generate_srt
+            segments = db.query(Segment).filter(Segment.job_id == job.id).order_by(Segment.idx.asc()).all()
+            if segments:
+                srt_path = storage.get_path(srt_key)
+                generate_srt(segments, srt_path, include_speaker=False)
+                file_path = srt_path
 
     if not file_path or not file_path.is_file():
         raise HTTPException(status_code=404, detail=f"Output {kind} not ready for download")
 
+    if inline:
+        return FileResponse(
+            path=str(file_path),
+            media_type=media_type,
+            headers={"Content-Disposition": "inline"}
+        )
 
     return FileResponse(
         path=str(file_path),
@@ -392,13 +445,13 @@ def download_artifact(
 @router.get("/{job_id}/download-url")
 def get_signed_download_url(
     job_id: str,
-    kind: str = Query("video", pattern="^(video|audio|audio_mp3|audio_wav)$"),
+    kind: str = Query("video", pattern="^(video|audio|audio_mp3|audio_wav|subtitles_zip|subtitles_srt|subtitles_vtt)$"),
     format: str = Query("mp3", pattern="^(mp3|wav)$"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Returns a short-lived signed download URL for the requested artifact."""
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
+    job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 

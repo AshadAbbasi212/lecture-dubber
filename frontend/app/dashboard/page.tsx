@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
 import { api, Job } from "@/lib/api";
 import { 
   Layers, 
@@ -33,7 +32,6 @@ function YoutubeIcon({ className }: { className?: string }) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
@@ -51,16 +49,10 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-      return;
-    }
-    if (user) {
-      fetchJobs();
-      const interval = setInterval(fetchJobs, 6000);
-      return () => clearInterval(interval);
-    }
-  }, [user, authLoading, router]);
+    fetchJobs();
+    const interval = setInterval(fetchJobs, 6000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -139,7 +131,7 @@ export default function DashboardPage() {
     return true;
   });
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center py-20 text-slate-400 gap-3">
         <span className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></span>

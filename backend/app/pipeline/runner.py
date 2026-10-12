@@ -249,7 +249,8 @@ class PipelineRunner:
             orig_audio_path = storage.get_path(f"{job_dir}/audio/original.wav")
             audio_dir = storage.get_path(f"{job_dir}/audio")
             separator = DemucsSeparatorEngine()
-            separator.separate(str(orig_audio_path), str(audio_dir))
+            sep_mode = options.get("separation_mode", "fast")
+            separator.separate(str(orig_audio_path), str(audio_dir), mode=sep_mode)
 
             self._record_artifact(job, "vocals_wav", voc_key, stage)
             self._record_artifact(job, "background_wav", bg_key, stage)
@@ -280,6 +281,28 @@ class PipelineRunner:
             if not job.source_lang:
                 job.source_lang = asr_res.language
                 self.db.commit()
+
+            # Context hint extraction to assist domain and speaker classification
+            context_hint = str(job.source_ref or "")
+            if job.source_type == "upload":
+                try:
+                    upload_meta = storage.get(f"uploads/{job.source_ref}/meta.json")
+                    if upload_meta:
+                        meta_dict = json.loads(upload_meta.decode("utf-8"))
+                        context_hint += " " + meta_dict.get("filename", "")
+                except Exception:
+                    pass
+
+            single_speaker = options.get("single_speaker", False) or (options.get("selected_voice") not in [None, "auto"])
+
+            # Speaker diarization: identify and cluster speakers (or unify for solo lecture)
+            from backend.app.engines.asr.speaker_diarization import diarize_segments
+            diarize_segments(
+                asr_res.segments,
+                audio_path=str(vocals_path),
+                context_hint=context_hint,
+                single_speaker=single_speaker
+            )
 
             transcript_payload = {
                 "detected_language": asr_res.language,
@@ -342,12 +365,24 @@ class PipelineRunner:
                 for s in raw_segs
             ]
 
+            # Extract original filename or source context to assist educational corpus matching
+            context_hint = str(job.source_ref or "")
+            if job.source_type == "upload":
+                try:
+                    upload_meta = storage.get(f"uploads/{job.source_ref}/meta.json")
+                    if upload_meta:
+                        meta_dict = json.loads(upload_meta.decode("utf-8"))
+                        context_hint += " " + meta_dict.get("filename", "")
+                except Exception:
+                    pass
+
             translator = LocalLLMTranslator()
             translated_segs = translator.translate(
                 segments=transcript_segments,
                 src_lang=job.source_lang or "en",
                 tgt_lang=job.target_lang,
-                glossary=options.get("glossary")
+                glossary=options.get("glossary"),
+                context_hint=context_hint
             )
 
             self.db.query(Segment).filter(Segment.job_id == job.id).delete()
@@ -377,6 +412,7 @@ class PipelineRunner:
                         "end": ts.end,
                         "src_text": ts.src_text,
                         "tgt_text": ts.tgt_text,
+                        "speaker": ts.speaker,
                         "flagged": ts.flagged,
                         "flag_reason": ts.flag_reason
                     }
@@ -433,6 +469,7 @@ class PipelineRunner:
                             logger.warning(f"Could not build reference clip for job {job.id}: {e}; proceeding without cloning")
                             ref_clip_path = None
 
+            selected_voice = options.get("selected_voice", "auto")
             synthesizer = VoiceSynthesizer()
             for i, seg in enumerate(segments):
                 seg_rel_key = f"{job_dir}/tts/seg_{seg.idx:04d}.wav"
@@ -457,7 +494,10 @@ class PipelineRunner:
                         language=job.target_lang,
                         out_path=raw_seg_path,
                         reference_clip=ref_clip_path,
-                        clone_voice=clone_voice
+                        clone_voice=clone_voice,
+                        speaker=seg.speaker,
+                        target_duration=slot_duration,
+                        voice=selected_voice
                     )
 
                     fit_decision = calculate_timing_fit(
@@ -548,13 +588,22 @@ class PipelineRunner:
             segments = self.db.query(Segment).filter(Segment.job_id == job.id).order_by(Segment.idx.asc()).all()
             srt_path = None
             if options.get("generate_subtitles", True) and segments:
-                from backend.app.pipeline.subtitle_generator import generate_srt
+                from backend.app.pipeline.subtitle_generator import generate_srt, create_subtitles_bundle_zip
                 srt_key = f"{job_dir}/output/subtitles.srt"
                 srt_file = storage.get_path(srt_key)
+                zip_key = f"{job_dir}/output/subtitles_bundle.zip"
+                zip_file = storage.get_path(zip_key)
                 try:
                     generate_srt(segments, srt_file, include_speaker=False)
                     self._record_artifact(job, "subtitles_srt", srt_key, stage)
                     srt_path = srt_file
+                    create_subtitles_bundle_zip(
+                        segments=segments,
+                        output_zip_path=zip_file,
+                        target_lang=job.target_lang or "ur",
+                        source_lang=job.source_lang or "ur"
+                    )
+                    self._record_artifact(job, "subtitles_zip", zip_key, stage)
                 except Exception as esub:
                     logger.warning(f"Could not generate subtitles for job {job.id}: {esub}")
 

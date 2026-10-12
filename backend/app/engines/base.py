@@ -76,7 +76,10 @@ class TTSEngine(ABC):
         text: str,
         language: str,
         out_path: str,
-        reference_audio: Optional[str] = None
+        reference_audio: Optional[str] = None,
+        speaker: Optional[str] = None,
+        target_duration: Optional[float] = None,
+        voice: Optional[str] = None
     ) -> float:
         """Synthesize speech. Returns duration in seconds."""
         pass

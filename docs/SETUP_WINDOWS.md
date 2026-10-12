@@ -11,22 +11,23 @@ Target: Windows 10/11, NVIDIA GPU with 8 GB VRAM.
 5. **FFmpeg**: `winget install Gyan.FFmpeg` (restart the terminal so it is on PATH). Confirm with `ffmpeg -version` and `ffprobe -version`.
 6. **Microsoft C++ Build Tools**: needed to compile some Python wheels.
 7. **Enable long paths** (Windows setting and `git config --global core.longpaths true`); some model repos have deep folders.
-8. **PyTorch with CUDA**: install from the official PyTorch index that matches your driver (the agent will pick the right command in Phase 0 after checking pytorch.org). Do not install the CPU-only wheel.
-9. Optional: **WSL2 (Ubuntu)** with GPU support, as a fallback for repos that do not run on native Windows.
+8. **PyTorch with CUDA**: install from the official PyTorch index that matches your NVIDIA CUDA driver (e.g., CUDA 12.1: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`). Do not install the CPU-only wheel.
+9. Optional: **WSL2 (Ubuntu)** with GPU support, as a fallback environment.
 
-## Check everything
+## Check Prerequisites
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\check_prereqs.ps1
 ```
 
-## Disk and memory
+## Disk and Memory
 
-Plan for at least 50 GB free for models plus working space for videos (a
-60-minute lecture can produce several GB of intermediates). 16 GB of system RAM
-is a practical minimum; 32 GB is more comfortable.
+Plan for at least 50 GB free for neural model weights and working storage for videos (a 60-minute lecture can produce several GB of intermediates). 16 GB of system RAM is recommended; 32 GB is optimal.
 
-## Running (after the agent builds it)
+## Running the Platform
 
-The agent will add `scripts/run_dev.ps1` in Phase 7 to start the API, the worker
-and the frontend together.
+Run `scripts\run_all.ps1` (or `scripts\run.ps1`) to launch all services concurrently:
+- FastAPI Backend (`http://localhost:8000`)
+- Background Queue Worker (with GPU concurrency lock)
+- Next.js Web Frontend (`http://localhost:3000`)
+

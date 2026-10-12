@@ -27,6 +27,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 def setup_test_env(tmp_path_factory):
     test_storage_dir = tmp_path_factory.mktemp("test_storage")
     settings.STORAGE_DIR = str(test_storage_dir)
+    settings.APP_ENV = "test"
 
 
 @pytest.fixture

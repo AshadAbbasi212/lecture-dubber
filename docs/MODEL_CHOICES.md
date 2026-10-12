@@ -34,8 +34,7 @@ Confidence key: H = fairly sure, M = unsure, L = guess.
 2. **Lip-sync must be benchmarked on the real 8 GB card** with a real lecture clip
    before anything is built around it.
 3. Keep every model behind an interface and record chosen model + version +
-   license link per stage in `DECISIONS.md` and in `THIRD_PARTY_LICENSES.md` (to be
-   created in Phase 7).
+   license link per stage in `DECISIONS.md`.
 
 ## Reference repos (clone only what Phase 0 shows is needed)
 

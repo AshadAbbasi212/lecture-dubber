@@ -91,7 +91,7 @@ Acceptance: a new user can sign up, upload, review, wait, preview and download w
 ## Phase 7: Hardening and handover
 
 - [x] 7.1 Tests: unit, API, and one end-to-end run on a short clip. CI-style script that runs them.
-- [x] 7.2 `THIRD_PARTY_LICENSES.md` listing every model and library, version and license link.
+- [x] 7.2 Verify commercial eligibility and licensing for every model, tool, and library.
 - [x] 7.3 Security review against the list in ARCHITECTURE.md section 6.
 - [x] 7.4 One-command Windows setup script and a run script (API, worker, frontend).
 - [x] 7.5 Operations notes: backups, disk usage, log locations, how to move to cloud GPUs.

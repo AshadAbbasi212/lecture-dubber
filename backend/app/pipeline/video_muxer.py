@@ -58,94 +58,77 @@ def mux_video_and_audio(
     doc_title = title or f"Lecture Dubber - Dubbed ({target_lang})"
     has_sub = subtitle_path is not None and Path(subtitle_path).is_file()
 
-    # Step 2: Try direct stream copy for video stream (-c:v copy)
-    cmd_copy = [
-        ffmpeg_cmd, "-y",
-        "-i", str(video_path),
-        "-i", str(audio_path),
-    ]
-    if has_sub:
-        cmd_copy.extend(["-i", str(subtitle_path)])
+    # Step 2: Configure stream mapping & dual-audio tracks
+    # Track 1 = Dubbed Audio (default)
+    # Track 2 = Original Source Audio (if present in input video, for toggle in VLC/media players)
+    has_orig_audio = bool(v_probe.has_audio)
 
-    cmd_copy.extend([
-        "-c:v", "copy",
-        "-c:a", "aac",
-        "-b:a", "192k",
-        "-ar", "44100",
-    ])
-    if has_sub:
-        cmd_copy.extend([
-            "-c:s", "mov_text",
-            "-map", "0:v:0",
-            "-map", "1:a:0",
-            "-map", "2:0",
-            "-metadata:s:s:0", f"language={target_lang}",
-            "-metadata:s:s:0", "title=Closed Captions (CC)"
-        ])
-    else:
-        cmd_copy.extend([
-            "-map", "0:v:0",
-            "-map", "1:a:0",
-        ])
-
-    cmd_copy.extend([
-        "-shortest",
-        "-movflags", "+faststart",
-        "-metadata", f"title={doc_title}",
-        "-metadata", "comment=AI Dubbed with Lecture Dubber (Local AI Platform)",
-        "-metadata", "service_name=Lecture Dubber",
-        "-metadata:s:a:0", f"language={target_lang}",
-        "-metadata:s:a:0", f"title=Dubbed Speech ({target_lang})",
-        str(output_path)
-    ])
-
-    res = subprocess.run(cmd_copy, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
-
-    if res.returncode != 0 or not output_path.exists() or output_path.stat().st_size == 0:
-        logger.warning(f"Video stream copy failed ({res.stderr[:200]}); falling back to x264 transcode.")
-        # Fallback: re-encode video stream to ensure 100% compatibility
-        cmd_transcode = [
+    def build_cmd(use_copy_v: bool) -> list:
+        cmd = [
             ffmpeg_cmd, "-y",
             "-i", str(video_path),
             "-i", str(audio_path),
         ]
         if has_sub:
-            cmd_transcode.extend(["-i", str(subtitle_path)])
+            cmd.extend(["-i", str(subtitle_path)])
 
-        cmd_transcode.extend([
-            "-c:v", "libx264",
-            "-preset", "fast",
-            "-crf", "22",
-            "-pix_fmt", "yuv420p",
+        if use_copy_v:
+            cmd.extend(["-c:v", "copy"])
+        else:
+            cmd.extend([
+                "-c:v", "libx264",
+                "-preset", "fast",
+                "-crf", "22",
+                "-pix_fmt", "yuv420p",
+            ])
+
+        cmd.extend([
             "-c:a", "aac",
             "-b:a", "192k",
             "-ar", "44100",
+            "-map", "0:v:0",
+            "-map", "1:a:0",
         ])
+
+        if has_orig_audio:
+            cmd.extend(["-map", "0:a:0"])
+
         if has_sub:
-            cmd_transcode.extend([
+            cmd.extend([
                 "-c:s", "mov_text",
-                "-map", "0:v:0",
-                "-map", "1:a:0",
                 "-map", "2:0",
                 "-metadata:s:s:0", f"language={target_lang}",
-                "-metadata:s:s:0", "title=Closed Captions (CC)"
-            ])
-        else:
-            cmd_transcode.extend([
-                "-map", "0:v:0",
-                "-map", "1:a:0",
+                "-metadata:s:s:0", "title=Closed Captions (CC)",
+                "-disposition:s:0", "default"
             ])
 
-        cmd_transcode.extend([
+        cmd.extend([
             "-shortest",
             "-movflags", "+faststart",
             "-metadata", f"title={doc_title}",
             "-metadata", "comment=AI Dubbed with Lecture Dubber (Local AI Platform)",
             "-metadata", "service_name=Lecture Dubber",
             "-metadata:s:a:0", f"language={target_lang}",
-            "-metadata:s:a:0", f"title=Dubbed Speech ({target_lang})",
-            str(output_path)
+            "-metadata:s:a:0", f"title=Dubbed Audio ({target_lang})",
+            "-disposition:a:0", "default",
         ])
+
+        if has_orig_audio:
+            cmd.extend([
+                "-metadata:s:a:1", "language=und",
+                "-metadata:s:a:1", "title=Original Audio",
+                "-disposition:a:1", "0",
+            ])
+
+        cmd.append(str(output_path))
+        return cmd
+
+    cmd_copy = build_cmd(use_copy_v=True)
+    res = subprocess.run(cmd_copy, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+
+    if res.returncode != 0 or not output_path.exists() or output_path.stat().st_size == 0:
+        logger.warning(f"Video stream copy failed ({res.stderr[:200]}); falling back to x264 transcode.")
+        cmd_transcode = build_cmd(use_copy_v=False)
         res_transcode = subprocess.run(cmd_transcode, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
         if res_transcode.returncode != 0 or not output_path.exists() or output_path.stat().st_size == 0:
             raise MediaValidationError(f"Failed to mux final video: {res_transcode.stderr}")

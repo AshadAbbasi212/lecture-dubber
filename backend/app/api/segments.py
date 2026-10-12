@@ -32,7 +32,7 @@ class SegmentUpdateRequest(BaseModel):
 
 @router.get("", response_model=List[SegmentResponse])
 def get_segments(job_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
+    job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -61,7 +61,7 @@ def update_segments(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    job = db.query(Job).filter(Job.id == job_id, Job.user_id == current_user.id).first()
+    job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
