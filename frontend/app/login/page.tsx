@@ -52,7 +52,7 @@ export default function LoginPage() {
           <div className="inline-flex h-12 w-12 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 items-center justify-center shadow-lg shadow-indigo-500/20 mb-4">
             <Languages className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Sign in to Lecture Dubber</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Sign in to OpenDub</h2>
           <p className="mt-2 text-sm text-slate-400">
             Access your lecture translation dashboard and neural dubbing studio
           </p>

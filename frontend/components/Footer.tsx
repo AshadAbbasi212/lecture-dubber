@@ -61,7 +61,7 @@ export function Footer() {
 
         <div className="pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            &copy; 2026 Lecture Dubber. Built with Faster-Whisper, Qwen2.5, Demucs & OpenVoice.
+            &copy; 2026 OpenDub. Built with Faster-Whisper, Qwen2.5, Demucs & OpenVoice.
           </div>
           <div className="flex items-center gap-4 text-slate-400">
             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px]">

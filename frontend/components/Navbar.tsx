@@ -28,13 +28,13 @@ export function Navbar() {
           </div>
           <div>
             <div className="font-bold text-lg text-white tracking-tight flex items-center gap-1.5">
-              Lecture Dubber
+              OpenDub
               <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                v1 Local
+                v1 Local AI
               </span>
             </div>
             <div className="text-[11px] text-slate-400 hidden sm:block">
-              AI Voice Dubbing for Education
+              Free & Open-Source Video Dubbing Studio
             </div>
           </div>
         </Link>

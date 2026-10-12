@@ -9,8 +9,8 @@ import { Footer } from "@/components/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Lecture Dubber | AI Educational Voice Dubbing",
-  description: "Translate educational video lectures, dub them in the speaker's cloned voice with background preservation, and export with sample-accurate sync.",
+  title: "OpenDub | Free & 100% Local AI Video Dubbing Studio",
+  description: "Translate educational and creator videos into 12 languages with authentic neural voices, background music preservation, and sample-accurate A/V sync — running completely offline.",
 };
 
 export default function RootLayout({

@@ -15,19 +15,19 @@ from backend.app.api.uploads import router as uploads_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
-    logger.info("Initializing Lecture Dubber database and storage...")
+    logger.info("Initializing OpenDub database and storage...")
     init_db()
     # Ensure storage root exists
     _ = settings.storage_path
-    logger.info("Lecture Dubber API startup complete.")
+    logger.info("OpenDub API startup complete.")
     yield
-    logger.info("Lecture Dubber API shutting down...")
+    logger.info("OpenDub API shutting down...")
 
 
 app = FastAPI(
-    title="Lecture Dubber API",
+    title="OpenDub API",
     version="1.0.0",
-    description="Video lecture translation and voice cloning platform API.",
+    description="Free & Open-Source 100% Local AI Video Dubbing & Video Translation Platform API.",
     lifespan=lifespan
 )
 

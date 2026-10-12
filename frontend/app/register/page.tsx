@@ -75,9 +75,9 @@ export default function RegisterPage() {
           <div className="inline-flex h-12 w-12 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 items-center justify-center shadow-lg shadow-indigo-500/20 mb-4">
             <Languages className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Create your Dubber account</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Create your OpenDub account</h2>
           <p className="mt-2 text-sm text-slate-400">
-            Start dubbing, translating, and publishing educational lectures worldwide
+            Start dubbing, translating, and publishing multilingual videos worldwide
           </p>
         </div>
 

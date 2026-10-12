@@ -1,4 +1,4 @@
-# Lecture Dubber — Free Open-Source AI Video Dubber & Video Translator
+# OpenDub — Free & Open-Source 100% Local AI Video Dubbing & Video Translation Studio
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 **Free, Open-Source, and 100% Local AI Video Dubbing & Video Translation Platform for Education and Creators.**  
 Translate educational lectures and videos into 12 languages with authentic neural voices, background music preservation, and sample-accurate A/V sync — running completely offline on standard workstation hardware. Zero subscription fees, zero cloud API limits, and zero data leakage.
 
-[Live Demo](#-live-demonstration) • [Features](#key-features) • [Comparison](#-how-lecture-dubber-compares) • [Architecture](#system-architecture) • [Quick Start](#quick-start) • [Supported Languages](#-supported-languages--neural-voices) • [License](#licensing--commercial-freedom)
+[Live Demo](#-live-demonstration) • [Features](#key-features) • [Comparison](#-how-opendub-compares) • [Architecture](#system-architecture) • [Quick Start](#quick-start) • [Supported Languages](#-supported-languages--neural-voices) • [License](#licensing--commercial-freedom)
 
 <br>
 
@@ -22,8 +22,8 @@ Translate educational lectures and videos into 12 languages with authentic neura
 
 ### 🎬 Live Demonstration
 
-<a href="https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_urdu.mp4">
-  <img src="docs/assets/demo.gif" alt="Lecture Dubber Pipeline Demonstration" width="700" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+<a href="https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_urdu.mp4">
+  <img src="docs/assets/demo.gif" alt="OpenDub Pipeline Demonstration" width="700" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
 </a>
 <br>
 <em><b>1-Minute Dubbed Lecture Demo</b>: Richard Feynman's iconic science lecture automatically transcribed, length-budgeted, translated into Urdu, synthesized with Tariq neural voice, and muxed with zero A/V drift on a 4 GB VRAM GPU.</em>
@@ -36,26 +36,26 @@ Translate educational lectures and videos into 12 languages with authentic neura
 
 | Target Language | Voice Model | Gender & Persona | Audio Track | Direct Stream / Download (MP4) |
 | :--- | :--- | :--- | :---: | :---: |
-| 🇺🇸 **English (Source)** | Richard Feynman | Original Speaker | Original Mic | [**▶️ original_lecture_english.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/original_lecture_english.mp4) |
-| 🇵🇰 **Urdu** | Tariq (`ur_PK-fasih`) | Male Academic Scholar | Neural + Ducked Reverb | [**▶️ dubbed_lecture_urdu.mp4 (3.5 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_urdu.mp4) |
-| 🇪🇸 **Spanish** | Dave (`es_ES-davefx`) | Male European Castilian | Neural + Ducked Reverb | [**▶️ dubbed_lecture_spanish.mp4 (3.3 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_spanish.mp4) |
-| 🇸🇦 **Arabic** | Kareem (`ar_JO-kareem`) | Male Classical Scholar | Neural + Ducked Reverb | [**▶️ dubbed_lecture_arabic.mp4 (3.8 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_arabic.mp4) |
-| 🇫🇷 **French** | Gilles (`fr_FR-gilles`) | Male Sorbonne Academic | Neural + Ducked Reverb | [**▶️ dubbed_lecture_french.mp4 (3.5 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_french.mp4) |
-| 🇩🇪 **German** | Thorsten (`de_DE-thorsten`) | Male Professor Baritone | Neural + Ducked Reverb | [**▶️ dubbed_lecture_german.mp4 (3.3 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_german.mp4) |
-| 🇮🇳 **Hindi** | Pratham (`hi_IN-pratham`) | Male Academic Lecturer | Neural + Ducked Reverb | [**▶️ dubbed_lecture_hindi.mp4 (3.5 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_hindi.mp4) |
-| 🇷🇺 **Russian** | Denis (`ru_RU-denis`) | Male Scholar Baritone | Neural + Ducked Reverb | [**▶️ dubbed_lecture_russian.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_russian.mp4) |
-| 🇨🇳 **Chinese** | Chaowen (`zh_CN-chaowen`) | Male Academic Lecturer | Neural + Ducked Reverb | [**▶️ dubbed_lecture_chinese.mp4 (2.9 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_chinese.mp4) |
-| 🇮🇹 **Italian** | Riccardo (`it_IT-riccardo`) | Male University Professor | Neural + Ducked Reverb | [**▶️ dubbed_lecture_italian.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_italian.mp4) |
-| 🇧🇷 **Portuguese** | Faber (`pt_BR-faber`) | Male Brazilian Academic | Neural + Ducked Reverb | [**▶️ dubbed_lecture_portuguese.mp4 (3.3 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_portuguese.mp4) |
-| 🇹🇷 **Turkish** | DFKI (`tr_TR-dfki`) | Male Academic Lecturer | Neural + Ducked Reverb | [**▶️ dubbed_lecture_turkish.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_turkish.mp4) |
+| 🇺🇸 **English (Source)** | Richard Feynman | Original Speaker | Original Mic | [**▶️ original_lecture_english.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/original_lecture_english.mp4) |
+| 🇵🇰 **Urdu** | Tariq (`ur_PK-fasih`) | Male Academic Scholar | Neural + Ducked Reverb | [**▶️ dubbed_lecture_urdu.mp4 (3.5 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_urdu.mp4) |
+| 🇪🇸 **Spanish** | Dave (`es_ES-davefx`) | Male European Castilian | Neural + Ducked Reverb | [**▶️ dubbed_lecture_spanish.mp4 (3.3 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_spanish.mp4) |
+| 🇸🇦 **Arabic** | Kareem (`ar_JO-kareem`) | Male Classical Scholar | Neural + Ducked Reverb | [**▶️ dubbed_lecture_arabic.mp4 (3.8 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_arabic.mp4) |
+| 🇫🇷 **French** | Gilles (`fr_FR-gilles`) | Male Sorbonne Academic | Neural + Ducked Reverb | [**▶️ dubbed_lecture_french.mp4 (3.5 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_french.mp4) |
+| 🇩🇪 **German** | Thorsten (`de_DE-thorsten`) | Male Professor Baritone | Neural + Ducked Reverb | [**▶️ dubbed_lecture_german.mp4 (3.3 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_german.mp4) |
+| 🇮🇳 **Hindi** | Pratham (`hi_IN-pratham`) | Male Academic Lecturer | Neural + Ducked Reverb | [**▶️ dubbed_lecture_hindi.mp4 (3.5 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_hindi.mp4) |
+| 🇷🇺 **Russian** | Denis (`ru_RU-denis`) | Male Scholar Baritone | Neural + Ducked Reverb | [**▶️ dubbed_lecture_russian.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_russian.mp4) |
+| 🇨🇳 **Chinese** | Chaowen (`zh_CN-chaowen`) | Male Academic Lecturer | Neural + Ducked Reverb | [**▶️ dubbed_lecture_chinese.mp4 (2.9 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_chinese.mp4) |
+| 🇮🇹 **Italian** | Riccardo (`it_IT-riccardo`) | Male University Professor | Neural + Ducked Reverb | [**▶️ dubbed_lecture_italian.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_italian.mp4) |
+| 🇧🇷 **Portuguese** | Faber (`pt_BR-faber`) | Male Brazilian Academic | Neural + Ducked Reverb | [**▶️ dubbed_lecture_portuguese.mp4 (3.3 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_portuguese.mp4) |
+| 🇹🇷 **Turkish** | DFKI (`tr_TR-dfki`) | Male Academic Lecturer | Neural + Ducked Reverb | [**▶️ dubbed_lecture_turkish.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/opendub/raw/main/docs/assets/dubbed_lecture_turkish.mp4) |
 
 </div>
 
 ---
 
-## ⚡ How Lecture Dubber Compares
+## ⚡ How OpenDub Compares
 
-| Feature | Lecture Dubber (Local AI) | ElevenLabs / HeyGen | Rask.ai / Cloud Dubbers |
+| Feature | OpenDub (Local AI) | ElevenLabs / HeyGen | Rask.ai / Cloud Dubbers |
 | :--- | :---: | :---: | :---: |
 | **Price** | **100% Free & Open-Source** | $1.50 – $3.00 / minute | Expensive monthly tiers |
 | **Data Privacy** | **100% Local (0 Cloud Leakage)** | Third-party cloud servers | Third-party cloud servers |
@@ -71,11 +71,11 @@ Translate educational lectures and videos into 12 languages with authentic neura
 
 ## Overview
 
-**Lecture Dubber** solves the challenge of translating academic lectures, seminars, and technical discourses into multiple languages without losing the original speaker's vocal nuance, pacing, and room ambience.
+**OpenDub** solves the challenge of translating academic lectures, seminars, keynotes, and educational videos into multiple languages without losing the original speaker's vocal nuance, pacing, and room ambience.
 
-Unlike cloud-dependent dubbing APIs that charge steep per-minute rates and send sensitive intellectual property to external servers, **Lecture Dubber runs 100% locally on your machine**. It requires zero external AI API keys, produces zero telemetry, and is engineered to run seamlessly on standard consumer or laptop NVIDIA GPUs with **4 GB VRAM** (e.g. GTX 1650, RTX 3050 Laptop, Quadro, or higher).
+Unlike cloud-dependent dubbing APIs that charge steep per-minute rates and send sensitive intellectual property to external servers, **OpenDub runs 100% locally on your machine**. It requires zero external AI API keys, produces zero telemetry, and is engineered to run seamlessly on standard consumer or laptop NVIDIA GPUs with **4 GB VRAM** (e.g. GTX 1650, RTX 3050 Laptop, Quadro, or higher).
 
-### Why Lecture Dubber?
+### Why OpenDub?
 
 - **100% Private & Local**: Video files, audio stems, and student transcripts never leave your infrastructure.
 - **True Background Sound Preservation**: Isolates the speaker's vocal track while preserving background room acoustics, audience Q&A tone, chalk-on-blackboard sounds, and presentation audio.
@@ -111,7 +111,7 @@ Unlike cloud-dependent dubbing APIs that charge steep per-minute rates and send 
 
 ## System Architecture
 
-Lecture Dubber operates as two decoupled services coordinating through an atomic SQLite queue and shared local storage:
+OpenDub operates as two decoupled services coordinating through an atomic SQLite queue and shared local storage:
 
 ```mermaid
 graph TD
@@ -220,8 +220,8 @@ Benchmarked on host hardware: **Windows 11, Intel Core i7, NVIDIA Quadro GPU (4�
 
 Clone the repository and run the setup script:
 ```powershell
-git clone https://github.com/your-username/lecture-dubber.git
-cd lecture-dubber
+git clone https://github.com/AshadAbbasi212/opendub.git
+cd opendub
 
 # Automated environment setup (virtualenv, dependencies, migrations, frontend packages)
 .\scripts\setup_windows.ps1
@@ -245,7 +245,7 @@ The service orchestrator initializes all components:
 
 ## Running Automated Tests
 
-Lecture Dubber includes 95 automated unit, security, API, and media pipeline integration tests:
+OpenDub includes 95 automated unit, security, API, and media pipeline integration tests:
 
 ```powershell
 # Run backend pytest suite
@@ -265,14 +265,14 @@ Full automated test suite runner:
 
 ## Security & Compliance
 
-Lecture Dubber is built with defense-in-depth security principles:
+OpenDub is built with defense-in-depth security principles:
 
 - **Anti-SSRF Guard**: Strict DNS resolution before network requests. Rejects loopback (`127.0.0.0/8`, `::1`), private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `fc00::/7`), link-local metadata addresses (`169.254.169.254`), and multi-homed domain rebinding.
 - **Media Validation**: Strict `ffprobe` stream validation rejects decompression bombs, unparseable containers, video-only files, or lectures exceeding 90 minutes.
 - **Cryptographic Storage Protection**: File downloads are governed by HMAC-SHA256 tokens encoding `job_id`, `kind`, and short expiration windows (`exp`). Directory traversal (`../`) is strictly blocked.
 - **Password Security**: Passwords hashed with **Argon2id** (memory-hard password hashing).
 - **Speaker Consent & Attestation**: Digital attestation logs record speaker copyright and voice consent with client IP and timestamps prior to job processing.
-- **AI Provenance Tags**: Muxed video containers embed metadata tags (`AI-Dubbed: true`, `service: Lecture Dubber`) following synthetic media disclosure best practices.
+- **AI Provenance Tags**: Muxed video containers embed metadata tags (`AI-Dubbed: true`, `service: OpenDub`) following synthetic media disclosure best practices.
 
 ---
 
@@ -298,7 +298,7 @@ Lecture Dubber is built with defense-in-depth security principles:
 ## Directory Structure
 
 ```
-lecture-dubber/
+opendub/
 ├── backend/
 │   ├── app/
 │   │   ├── api/               FastAPI routers (auth, jobs, segments, uploads, health)
