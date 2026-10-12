@@ -19,9 +19,19 @@ Translate educational lectures and videos into 12 languages with authentic neura
 <br>
 
 <p align="center">
-  <img src="docs/assets/demo.gif" alt="Lecture Dubber - Free AI Video Dubbing in Action" width="680" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+  <video src="docs/assets/demo_dubbed_lecture.mp4" controls="controls" width="680" style="max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    <a href="https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/demo_dubbed_lecture.mp4">Watch 1-Minute Dubbed Lecture Video</a>
+  </video>
   <br>
-  <em><b>Live Platform Demo</b>: 1-minute lecture transcribed, length-budgeted, and dubbed into Urdu with authentic neural voice and background acoustic ducking (-12 dB) at 0.00s A/V drift.</em>
+  <a href="https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/demo_dubbed_lecture.mp4">
+    <img src="docs/assets/demo.gif" alt="Click to Watch 1-Minute Dubbed Lecture Video" width="680" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+  </a>
+  <br>
+  <em><b>🎬 Live 1-Minute Dubbed Lecture Demo</b>: Richard Feynman's iconic science lecture automatically transcribed, length-budgeted, translated, and dubbed into Urdu with authentic neural voice and background acoustic ducking (-12 dB) at 0.00s A/V drift.</em>
+  <br><br>
+  <a href="https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/demo_dubbed_lecture.mp4">
+    <b>▶️ Click Here to Play / Download the Full 1-Minute Dubbed Video (4.5 MB MP4)</b>
+  </a>
 </p>
 
 </div>
