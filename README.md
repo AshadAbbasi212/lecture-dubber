@@ -40,6 +40,27 @@ Translate educational lectures and videos into 12 languages with authentic neura
 <br>
 <em><b>Pipeline Demonstration</b>: 62-second lecture automatically transcribed, length-budgeted, translated into Urdu, synthesized with Tariq neural voice, and muxed with zero A/V drift on 4 GB VRAM hardware.</em>
 
+<br><br>
+
+### 🌐 Complete Multilingual Dubbing Showcase (11 Target Languages)
+
+*Every lecture video below is rendered 100% offline with zero external cloud APIs, using local neural speech synthesis and isolated background acoustics (-12 dB ducking). Click any video below to stream or download:*
+
+| Target Language | Voice Model | Gender & Persona | Audio Track | Direct Stream / Download (MP4) |
+| :--- | :--- | :--- | :---: | :---: |
+| 🇺🇸 **English (Source)** | Richard Feynman | Original Speaker | Original Mic | [**▶️ original_lecture_english.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/original_lecture_english.mp4) |
+| 🇵🇰 **Urdu** | Tariq (`ur_PK-fasih`) | Male Academic Scholar | Neural + Ducked Reverb | [**▶️ dubbed_lecture_urdu.mp4 (3.5 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_urdu.mp4) |
+| 🇪🇸 **Spanish** | Dave (`es_ES-davefx`) | Male European Castilian | Neural + Ducked Reverb | [**▶️ dubbed_lecture_spanish.mp4 (3.3 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_spanish.mp4) |
+| 🇸🇦 **Arabic** | Kareem (`ar_JO-kareem`) | Male Classical Scholar | Neural + Ducked Reverb | [**▶️ dubbed_lecture_arabic.mp4 (3.8 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_arabic.mp4) |
+| 🇫🇷 **French** | Gilles (`fr_FR-gilles`) | Male Sorbonne Academic | Neural + Ducked Reverb | [**▶️ dubbed_lecture_french.mp4 (3.5 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_french.mp4) |
+| 🇩🇪 **German** | Thorsten (`de_DE-thorsten`) | Male Professor Baritone | Neural + Ducked Reverb | [**▶️ dubbed_lecture_german.mp4 (3.3 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_german.mp4) |
+| 🇮🇳 **Hindi** | Pratham (`hi_IN-pratham`) | Male Academic Lecturer | Neural + Ducked Reverb | [**▶️ dubbed_lecture_hindi.mp4 (3.5 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_hindi.mp4) |
+| 🇷🇺 **Russian** | Denis (`ru_RU-denis`) | Male Scholar Baritone | Neural + Ducked Reverb | [**▶️ dubbed_lecture_russian.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_russian.mp4) |
+| 🇨🇳 **Chinese** | Chaowen (`zh_CN-chaowen`) | Male Academic Lecturer | Neural + Ducked Reverb | [**▶️ dubbed_lecture_chinese.mp4 (2.9 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_chinese.mp4) |
+| 🇮🇹 **Italian** | Riccardo (`it_IT-riccardo`) | Male University Professor | Neural + Ducked Reverb | [**▶️ dubbed_lecture_italian.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_italian.mp4) |
+| 🇧🇷 **Portuguese** | Faber (`pt_BR-faber`) | Male Brazilian Academic | Neural + Ducked Reverb | [**▶️ dubbed_lecture_portuguese.mp4 (3.3 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_portuguese.mp4) |
+| 🇹🇷 **Turkish** | DFKI (`tr_TR-dfki`) | Male Academic Lecturer | Neural + Ducked Reverb | [**▶️ dubbed_lecture_turkish.mp4 (3.4 MB)**](https://github.com/AshadAbbasi212/lecture-dubber/raw/main/docs/assets/dubbed_lecture_turkish.mp4) |
+
 </div>
 
 ---
@@ -269,20 +290,20 @@ Lecture Dubber is built with defense-in-depth security principles:
 
 ## 🌍 Supported Languages & Neural Voices
 
-| Language | Code | Primary Male Voice | Primary Female Voice | Academic Specialization |
-| :--- | :---: | :--- | :--- | :--- |
-| **Urdu** | `ur` | **Tariq** (Bayan Scholar) | **Ayesha** (Academic Lecturer) | Nastaliq script & Islamic lectures |
-| **Arabic** | `ar` | **Kareem** (Classical Scholar) | **Maryam** (Academic Lecturer) | Quranic/Hadith preservation |
-| **Spanish** | `es` | **Dave** (European Castilian) | **Sharvard** (Academic Lecturer) | STEM & university coursework |
-| **German** | `de` | **Thorsten** (Academic Baritone) | **Kerstin** (Technical Lecturer) | Technical & engineering lectures |
-| **French** | `fr` | **Gilles** (Sorbonne Academic) | **Siwis** (Expressive Lecturer) | Humanities & social sciences |
-| **Italian** | `it` | **Riccardo** (University Professor) | **Paola** (Academic Lecturer) | Classical & modern lectures |
-| **Russian** | `ru` | **Denis** (Scientific Scholar) | **Irina** (Academic Studio) | Mathematics & physics |
-| **Chinese (Mandarin)** | `zh` | **Chaowen** (Academic Lecturer) | **Huayan** (Broadcast Studio) | Technical & business lectures |
-| **Hindi** | `hi` | **Pratham** (Academic Lecturer) | **Priyamvada** (University Professor)| Multilingual South Asian curricula |
-| **Portuguese** | `pt` | **Faber** (Academic Scholar) | *Supported via timbre clone* | Engineering & biology |
-| **Turkish** | `tr` | **DFKI** (Academic Lecturer) | *Supported via timbre clone* | Academic lectures & history |
-| **English** | `en` | **Ryan** (Scholar Baritone) | **Lessac** (Expressive Lecturer) | Global educational standards |
+| Language | Code | Primary Male Voice | Primary Female Voice | Academic Specialization | 1-Min Dubbed Demo |
+| :--- | :---: | :--- | :--- | :--- | :---: |
+| **Urdu** | `ur` | **Tariq** (Bayan Scholar) | **Ayesha** (Academic Lecturer) | Nastaliq script & Islamic lectures | [▶️ Play Urdu (3.5 MB)](docs/assets/dubbed_lecture_urdu.mp4) |
+| **Arabic** | `ar` | **Kareem** (Classical Scholar) | **Maryam** (Academic Lecturer) | Quranic/Hadith preservation | [▶️ Play Arabic (3.8 MB)](docs/assets/dubbed_lecture_arabic.mp4) |
+| **Spanish** | `es` | **Dave** (European Castilian) | **Sharvard** (Academic Lecturer) | STEM & university coursework | [▶️ Play Spanish (3.3 MB)](docs/assets/dubbed_lecture_spanish.mp4) |
+| **German** | `de` | **Thorsten** (Academic Baritone) | **Kerstin** (Technical Lecturer) | Technical & engineering lectures | [▶️ Play German (3.3 MB)](docs/assets/dubbed_lecture_german.mp4) |
+| **French** | `fr` | **Gilles** (Sorbonne Academic) | **Siwis** (Expressive Lecturer) | Humanities & social sciences | [▶️ Play French (3.5 MB)](docs/assets/dubbed_lecture_french.mp4) |
+| **Italian** | `it` | **Riccardo** (University Professor) | **Paola** (Academic Lecturer) | Classical & modern lectures | [▶️ Play Italian (3.4 MB)](docs/assets/dubbed_lecture_italian.mp4) |
+| **Russian** | `ru` | **Denis** (Scientific Scholar) | **Irina** (Academic Studio) | Mathematics & physics | [▶️ Play Russian (3.4 MB)](docs/assets/dubbed_lecture_russian.mp4) |
+| **Chinese (Mandarin)** | `zh` | **Chaowen** (Academic Lecturer) | **Huayan** (Broadcast Studio) | Technical & business lectures | [▶️ Play Chinese (2.9 MB)](docs/assets/dubbed_lecture_chinese.mp4) |
+| **Hindi** | `hi` | **Pratham** (Academic Lecturer) | **Priyamvada** (University Professor)| Multilingual South Asian curricula | [▶️ Play Hindi (3.5 MB)](docs/assets/dubbed_lecture_hindi.mp4) |
+| **Portuguese** | `pt` | **Faber** (Academic Scholar) | *Supported via timbre clone* | Engineering & biology | [▶️ Play Portuguese (3.3 MB)](docs/assets/dubbed_lecture_portuguese.mp4) |
+| **Turkish** | `tr` | **DFKI** (Academic Lecturer) | *Supported via timbre clone* | Academic lectures & history | [▶️ Play Turkish (3.4 MB)](docs/assets/dubbed_lecture_turkish.mp4) |
+| **English** | `en` | **Ryan** (Scholar Baritone) | **Lessac** (Expressive Lecturer) | Global educational standards | [▶️ Original Source (3.4 MB)](docs/assets/original_lecture_english.mp4) |
 
 ---
 
